@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar - SIJAGAD</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Left Illustration -->
+        <div class="auth-illustration">
+            <div class="illustration-content">
+                <div class="logo-large">
+                    <i class="fas fa-mosque"></i>
+                    <span>SIJAGAD</span>
+                </div>
+                <h1>Bergabung dengan Santri Lain</h1>
+                <p>Daftar untuk mulai membayar SPP secara online</p>
+                <div class="floating-cards">
+                    <div class="card-float card-1"></div>
+                    <div class="card-float card-2"></div>
+                    <div class="card-float card-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Form -->
+        <div class="auth-form">
+            <div class="form-header">
+                <a href="{{ route('login') }}" class="back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h2>Buat Akun Santri</h2>
+                <p>Isi data diri dengan lengkap</p>
+            </div>
+
+            <form class="register-form" id="registerForm">
+                <!-- Row 1: NIS + Nama -->
+                <div class="input-row">
+                    <div class="input-group half">
+                        <label>NIS (Nomor Induk Santri) *</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-id-card"></i>
+                            <input type="text" id="nis" placeholder="123456" maxlength="10" required>
+                        </div>
+                    </div>
+                    <div class="input-group half">
+                        <label>Nama Lengkap *</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="nama" placeholder="Ahmad Santoso" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Tanggal Lahir + Alamat -->
+                <div class="input-row">
+                    <div class="input-group half">
+                        <label>Tanggal Lahir *</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-calendar"></i>
+                            <input type="date" id="tglLahir" required>
+                        </div>
+                    </div>
+                    <div class="input-group half">
+                        <label>Alamat *</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <input type="text" id="alamat" placeholder="Jl. Pondok Pesantren No. 123" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3: Email + Username -->
+                <div class="input-row">
+                    <div class="input-group half">
+                        <label>Email / Gmail *</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="email" placeholder="santri@pondok.ac.id" required>
+                        </div>
+                    </div>
+                    <div class="input-group half">
+                        <label>Username *</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-at"></i>
+                            <input type="text" id="username" placeholder="santri123" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="input-group">
+                    <label>Password *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" placeholder="Minimal 8 karakter" minlength="8" required>
+                        <i class="fas fa-eye toggle-password" data-target="password"></i>
+                    </div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="input-group">
+                    <label>Konfirmasi Password *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="confirmPassword" placeholder="Ulangi password" minlength="8" required>
+                        <i class="fas fa-eye toggle-password" data-target="confirmPassword"></i>
+                    </div>
+                </div>
+
+                <!-- Register Button -->
+                <button type="submit" class="auth-btn primary">
+                    <span class="btn-text">Daftar Akun</span>
+                    <div class="btn-loader" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                </button>
+            </form>
+
+            <!-- Login Link -->
+            <div class="auth-footer">
+                <p>Sudah punya akun?</p>
+                <a href="login.html" class="login-link">
+                    Masuk Sekarang
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
