@@ -549,3 +549,21 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Auto-focus role selector saat username diisi
+document.getElementById('loginUsername').addEventListener('blur', function() {
+    if (!document.getElementById('loginRole').value) {
+        document.getElementById('loginRole').focus();
+    }
+});
+
+// Validasi role sebelum submit
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    const role = document.getElementById('loginRole').value;
+    if (!role) {
+        e.preventDefault();
+        alert('Silakan pilih peran (Santri/Admin)');
+        document.getElementById('loginRole').focus();
+        return false;
+    }
+});

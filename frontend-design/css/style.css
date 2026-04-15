@@ -1114,3 +1114,30 @@ body {
     }
 }
 
+.select-wrapper {
+    position: relative;
+}
+
+select {
+    appearance: none;
+    background: transparent;
+    border: none;
+    padding-right: 2.5rem;
+    cursor: pointer;
+    width: 100%;
+    font-size: 16px;
+    color: #333;
+}
+
+.select-arrow {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #999;
+}
+
+select:focus + .select-arrow {
+    color: #007bff;
+}

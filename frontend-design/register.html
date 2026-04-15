@@ -17,8 +17,8 @@
                     <i class="fas fa-mosque"></i>
                     <span>SIJAGAD</span>
                 </div>
-                <h1>Bergabung dengan Santri Lain</h1>
-                <p>Daftar untuk mulai membayar SPP secara online</p>
+                <h1>Bergabung dengan Komunitas</h1>
+                <p>Daftar untuk mengelola SPP atau administrasi secara online</p>
                 <div class="floating-cards">
                     <div class="card-float card-1"></div>
                     <div class="card-float card-2"></div>
@@ -33,7 +33,7 @@
                 <a href="{{ route('login') }}" class="back-btn">
                     <i class="fas fa-arrow-left"></i>
                 </a>
-                <h2>Buat Akun Santri</h2>
+                <h2>Buat Akun Baru</h2>
                 <p>Isi data diri dengan lengkap</p>
             </div>
 
@@ -74,7 +74,21 @@
                     </div>
                 </div>
 
-                <!-- Row 3: Email + Username -->
+                <!-- Row 3: Peran/Role -->
+                <div class="input-group">
+                    <label>Pilih Peran *</label>
+                    <div class="input-wrapper select-wrapper">
+                        <i class="fas fa-user-tag"></i>
+                        <select id="role" required>
+                            <option value="">-- Pilih Peran --</option>
+                            <option value="santri">Santri</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <i class="fas fa-chevron-down select-arrow"></i>
+                    </div>
+                </div>
+
+                <!-- Row 4: Email + Username -->
                 <div class="input-row">
                     <div class="input-group half">
                         <label>Email / Gmail *</label>

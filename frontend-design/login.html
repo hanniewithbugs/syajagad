@@ -18,7 +18,7 @@
                     <span>SIJAGAD</span>
                 </div>
                 <h1>Selamat Datang Kembali</h1>
-                <p>Sistem pembayaran SPP santri Pondok Pesantren</p>
+                <p>Sistem pembayaran SPP santri & administrasi Pondok Pesantren</p>
                 <div class="floating-cards">
                     <div class="card-float card-1"></div>
                     <div class="card-float card-2"></div>
@@ -40,16 +40,30 @@
             <form class="login-form" id="loginForm">
                 <!-- Username/Email -->
                 <div class="input-group">
-                    <label>NIS / Email</label>
+                    <label>NIS / Email *</label>
                     <div class="input-wrapper">
                         <i class="fas fa-user"></i>
                         <input type="text" id="loginUsername" placeholder="Masukkan NIS atau Email" required>
                     </div>
                 </div>
 
+                <!-- Role Selector -->
+                <div class="input-group">
+                    <label>Pilih Peran *</label>
+                    <div class="input-wrapper select-wrapper">
+                        <i class="fas fa-user-tag"></i>
+                        <select id="loginRole" required>
+                            <option value="">-- Pilih Peran --</option>
+                            <option value="santri">Santri</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <i class="fas fa-chevron-down select-arrow"></i>
+                    </div>
+                </div>
+
                 <!-- Password -->
                 <div class="input-group">
-                    <label>Password</label>
+                    <label>Password *</label>
                     <div class="input-wrapper">
                         <i class="fas fa-lock"></i>
                         <input type="password" id="loginPassword" placeholder="Masukkan password" required>
