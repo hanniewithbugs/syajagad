@@ -1141,3 +1141,55 @@ select {
 select:focus + .select-arrow {
     color: #007bff;
 }
+
+
+.select-wrapper {
+    position: relative;
+}
+
+/* SELECT PERFECT MATCH - REPLACE SEMUA SELECT CSS */
+select {
+    height: 100% !important;           /* Full container height */
+    padding: 0 3rem 0 3rem !important; /* Equal left/right padding */
+    line-height: 1.5 !important;       /* Match input */
+    font-weight: 500 !important;       /* Match input */
+    letter-spacing: 0.025em !important;
+    text-indent: 0.1rem;               /* Micro-adjust */
+}
+}
+
+select option {
+    background: var(--dark-bg-2);
+    color: var(--text-primary);
+    padding: 0.5rem;
+}
+
+/* Icon positioning */
+.select-wrapper .fas.fa-user-tag {
+    left: 1.25rem !important;
+}
+
+.select-arrow {
+    position: absolute;
+    right: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1rem;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Focus state */
+select:focus {
+    color: var(--text-primary);
+}
+
+.input-wrapper:focus-within select {
+    color: var(--text-primary);
+}
+
+/* Placeholder styling */
+select:invalid {
+    color: var(--text-muted);
+}

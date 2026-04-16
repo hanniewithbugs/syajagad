@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Santri - SyaJagad</title>
+    <link rel="stylesheet" href="./css/dbSantri.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="logo-icon">
+                    <i class="fas fa-mosque"></i>
+                </div>
+                <span class="logo-text">SyaJagad</span>
+            </div>
+            <button class="sidebar-close" id="sidebarClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="sidebar-profile">
+            <div class="profile-avatar">
+                <div class="avatar-img">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div class="avatar-status online"></div>
+            </div>
+            <div class="profile-info">
+                <h4>Ahmad Santoso</h4>
+                <span class="profile-nis">NIS: 2024001</span>
+                <span class="profile-badge">
+                    <i class="fas fa-circle"></i>
+                    Santri Aktif
+                </span>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Menu Utama</div>
+            <ul class="nav-list">
+                <li class="nav-item active" data-page="dashboard">
+                    <a href="#" class="nav-link">
+                        <div class="nav-icon">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <span>Dashboard</span>
+                        <div class="nav-indicator"></div>
+                    </a>
+                </li>
+                <li class="nav-item" data-page="tagihan">
+                    <a href="#" class="nav-link">
+                        <div class="nav-icon">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <span>Tagihan</span>
+                        <div class="nav-badge">1</div>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="nav-section-label">Akun</div>
+            <ul class="nav-list">
+                <li class="nav-item" data-page="profil">
+                    <a href="#" class="nav-link">
+                        <div class="nav-icon">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <span>Profil Saya</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="./login.html" class="nav-link logout">
+                        <div class="nav-icon">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </div>
+                        <span>Keluar</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <div class="footer-info">
+                <i class="fas fa-shield-alt"></i>
+                <span>SSL Secured & Encrypted</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main-content" id="mainContent">
+
+        <!-- TOP NAVBAR -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="topbar-breadcrumb">
+                    <span class="breadcrumb-icon">
+                        <i class="fas fa-home"></i>
+                    </span>
+                    <span class="breadcrumb-sep">/</span>
+                    <span class="breadcrumb-current" id="breadcrumbCurrent">Dashboard</span>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-date">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span id="currentDate"></span>
+                </div>
+                <button class="topbar-notif" id="notifBtn">
+                    <i class="fas fa-bell"></i>
+                    <div class="notif-badge">1</div>
+                </button>
+                <div class="topbar-profile">
+                    <div class="tp-avatar">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="tp-info">
+                        <span class="tp-name">Ahmad Santoso</span>
+                        <span class="tp-role">Santri</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ===== PAGE: DASHBOARD ===== -->
+        <div class="page active" id="page-dashboard">
+            <div class="page-content">
+
+                <!-- Welcome Banner -->
+                <div class="welcome-banner">
+                    <div class="welcome-left">
+                        <div class="welcome-greeting">
+                            <span class="greeting-time" id="greetingTime">Selamat Pagi</span>
+                            <span class="greeting-emoji">☀️</span>
+                        </div>
+                        <h2>Santri</h2>
+                        <p>Pantau tagihan dan riwayat pembayaran SPP kamu di sini.</p>
+                        <a href="#" class="welcome-btn" id="bayarSekarangBtn">
+                            <i class="fas fa-credit-card"></i>
+                            Bayar Sekarang
+                        </a>
+                    </div>
+                    <div class="welcome-right">
+                        <div class="welcome-illustration">
+                            <div class="wi-mosque">
+                                <i class="fas fa-mosque"></i>
+                            </div>
+                            <div class="wi-coins">
+                                <div class="wi-coin c1">Rp</div>
+                                <div class="wi-coin c2">Rp</div>
+                                <div class="wi-coin c3">Rp</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="summary-grid">
+                    <div class="summary-card card-warning">
+                        <div class="sc-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="sc-info">
+                            <span class="sc-label">Tagihan Belum Lunas</span>
+                            <span class="sc-value">Rp 250.000</span>
+                            <span class="sc-sub">Jatuh tempo: 15 Nov 2024</span>
+                        </div>
+                        <div class="sc-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+
+                    <div class="summary-card card-success">
+                        <div class="sc-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="sc-info">
+                            <span class="sc-label">Total Sudah Dibayar</span>
+                            <span class="sc-value">Rp 2.500.000</span>
+                            <span class="sc-sub">10 transaksi berhasil</span>
+                        </div>
+                        <div class="sc-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+
+                    <div class="summary-card card-info">
+                        <div class="sc-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="sc-info">
+                            <span class="sc-label">Pembayaran Terakhir</span>
+                            <span class="sc-value">01 Okt 2024</span>
+                            <span class="sc-sub">SPP Oktober - Lunas</span>
+                        </div>
+                        <div class="sc-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Grid -->
+                <div class="content-grid">
+                    <!-- Tagihan Aktif -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3>
+                                <i class="fas fa-file-invoice-dollar"></i>
+                                Tagihan Aktif
+                            </h3>
+                            <a href="#" class="card-link" id="lihatSemuaTagihan">Lihat Semua</a>
+                        </div>
+                        <div class="card-body">
+                            <div class="tagihan-item unpaid">
+                                <div class="ti-left">
+                                    <div class="ti-icon">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                    <div class="ti-info">
+                                        <span class="ti-name">SPP November 2024</span>
+                                        <span class="ti-date">Jatuh tempo: 15 Nov 2024</span>
+                                    </div>
+                                </div>
+                                <div class="ti-right">
+                                    <span class="ti-amount">Rp 250.000</span>
+                                    <span class="ti-status unpaid">Belum Lunas</span>
+                                    <button class="ti-btn" id="bayarTagihanBtn">
+                                        <i class="fas fa-credit-card"></i>
+                                        Bayar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Riwayat Transaksi -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3>
+                                <i class="fas fa-history"></i>
+                                Riwayat Transaksi
+                            </h3>
+                            <span class="card-badge">10 Transaksi</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="tx-list">
+                                <div class="tx-item">
+                                    <div class="tx-icon success">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="tx-info">
+                                        <span class="tx-name">SPP Oktober 2024</span>
+                                        <span class="tx-meta">01 Okt 2024 · QRIS</span>
+                                    </div>
+                                    <div class="tx-right">
+                                        <span class="tx-amount">Rp 250.000</span>
+                                        <span class="tx-status success">Lunas</span>
+                                    </div>
+                                </div>
+                                <div class="tx-item">
+                                    <div class="tx-icon success">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="tx-info">
+                                        <span class="tx-name">SPP September 2024</span>
+                                        <span class="tx-meta">02 Sep 2024 · BCA VA</span>
+                                    </div>
+                                    <div class="tx-right">
+                                        <span class="tx-amount">Rp 250.000</span>
+                                        <span class="tx-status success">Lunas</span>
+                                    </div>
+                                </div>
+                                <div class="tx-item">
+                                    <div class="tx-icon success">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="tx-info">
+                                        <span class="tx-name">SPP Agustus 2024</span>
+                                        <span class="tx-meta">05 Agu 2024 · Mandiri VA</span>
+                                    </div>
+                                    <div class="tx-right">
+                                        <span class="tx-amount">Rp 250.000</span>
+                                        <span class="tx-status success">Lunas</span>
+                                    </div>
+                                </div>
+                                <div class="tx-item">
+                                    <div class="tx-icon late">
+                                        <i class="fas fa-exclamation"></i>
+                                    </div>
+                                    <div class="tx-info">
+                                        <span class="tx-name">SPP Juli 2024</span>
+                                        <span class="tx-meta">20 Jul 2024 · QRIS</span>
+                                    </div>
+                                    <div class="tx-right">
+                                        <span class="tx-amount">Rp 250.000</span>
+                                        <span class="tx-status late">Terlambat</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PAGE: TAGIHAN ===== -->
+        <div class="page" id="page-tagihan">
+            <div class="page-content">
+                <div class="page-header">
+                    <h2>
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        Tagihan SPP
+                    </h2>
+                    <p>Kelola dan bayar tagihan SPP kamu</p>
+                </div>
+
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="semua">Semua</button>
+                        <button class="filter-tab" data-filter="belum">Belum Lunas</button>
+                        <button class="filter-tab" data-filter="lunas">Lunas</button>
+                        <button class="filter-tab" data-filter="terlambat">Terlambat</button>
+                    </div>
+                    <div class="filter-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Cari tagihan..." id="searchTagihan">
+                    </div>
+                </div>
+
+                <!-- Tagihan List -->
+                <div class="tagihan-list" id="tagihanList">
+                    <!-- Unpaid -->
+                    <div class="tagihan-card unpaid" data-status="belum">
+                        <div class="tc-header">
+                            <div class="tc-title">
+                                <div class="tc-icon unpaid">
+                                                                    <div class="tc-icon unpaid">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div>
+                                    <h4>SPP November 2024</h4>
+                                    <span>Jatuh tempo: 15 November 2024</span>
+                                </div>
+                            </div>
+                            <span class="tc-badge unpaid">Belum Lunas</span>
+                        </div>
+                        <div class="tc-body">
+                            <div class="tc-amount">
+                                <span class="tc-label">Total Tagihan</span>
+                                <span class="tc-value">Rp 250.000</span>
+                            </div>
+                            <div class="tc-meta">
+                                <div class="tc-meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>November 2024</span>
+                                </div>
+                                <div class="tc-meta-item">
+                                    <i class="fas fa-tag"></i>
+                                    <span>SPP Bulanan</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tc-footer">
+                            <div class="tc-payment-methods">
+                                <span class="pm-tag">QRIS</span>
+                                <span class="pm-tag">BCA VA</span>
+                                <span class="pm-tag">Mandiri VA</span>
+                            </div>
+                            <button class="tc-pay-btn" onclick="openPaymentModal('SPP November 2024', 250000)">
+                                <i class="fas fa-credit-card"></i>
+                                Bayar Sekarang
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Paid -->
+                    <div class="tagihan-card paid" data-status="lunas">
+                        <div class="tc-header">
+                            <div class="tc-title">
+                                <div class="tc-icon paid">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div>
+                                    <h4>SPP Oktober 2024</h4>
+                                    <span>Dibayar: 01 Oktober 2024</span>
+                                </div>
+                            </div>
+                            <span class="tc-badge paid">Lunas</span>
+                        </div>
+                        <div class="tc-body">
+                            <div class="tc-amount">
+                                <span class="tc-label">Total Dibayar</span>
+                                <span class="tc-value">Rp 250.000</span>
+                            </div>
+                            <div class="tc-meta">
+                                <div class="tc-meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>Oktober 2024</span>
+                                </div>
+                                <div class="tc-meta-item">
+                                    <i class="fas fa-qrcode"></i>
+                                    <span>Via QRIS</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tc-footer">
+                            <div class="tc-trx-id">
+                                <i class="fas fa-receipt"></i>
+                                <span>TRX-2024100001</span>
+                            </div>
+                            <button class="tc-detail-btn">
+                                <i class="fas fa-eye"></i>
+                                Lihat Detail
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Late -->
+                    <div class="tagihan-card late" data-status="terlambat">
+                        <div class="tc-header">
+                            <div class="tc-title">
+                                <div class="tc-icon late">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div>
+                                    <h4>SPP Juli 2024</h4>
+                                    <span>Dibayar: 20 Juli 2024 (Terlambat 5 hari)</span>
+                                </div>
+                            </div>
+                            <span class="tc-badge late">Terlambat</span>
+                        </div>
+                        <div class="tc-body">
+                            <div class="tc-amount">
+                                <span class="tc-label">Total Dibayar</span>
+                                <span class="tc-value">Rp 250.000</span>
+                            </div>
+                            <div class="tc-meta">
+                                <div class="tc-meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>Juli 2024</span>
+                                </div>
+                                <div class="tc-meta-item">
+                                    <i class="fas fa-qrcode"></i>
+                                    <span>Via QRIS</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tc-footer">
+                            <div class="tc-trx-id">
+                                <i class="fas fa-receipt"></i>
+                                <span>TRX-2024070020</span>
+                            </div>
+                            <button class="tc-detail-btn">
+                                <i class="fas fa-eye"></i>
+                                Lihat Detail
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Paid Sep -->
+                    <div class="tagihan-card paid" data-status="lunas">
+                        <div class="tc-header">
+                            <div class="tc-title">
+                                <div class="tc-icon paid">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div>
+                                    <h4>SPP September 2024</h4>
+                                    <span>Dibayar: 02 September 2024</span>
+                                </div>
+                            </div>
+                            <span class="tc-badge paid">Lunas</span>
+                        </div>
+                        <div class="tc-body">
+                            <div class="tc-amount">
+                                <span class="tc-label">Total Dibayar</span>
+                                <span class="tc-value">Rp 250.000</span>
+                            </div>
+                            <div class="tc-meta">
+                                <div class="tc-meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>September 2024</span>
+                                </div>
+                                <div class="tc-meta-item">
+                                    <i class="fas fa-university"></i>
+                                    <span>Via BCA VA</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tc-footer">
+                            <div class="tc-trx-id">
+                                <i class="fas fa-receipt"></i>
+                                <span>TRX-2024090002</span>
+                            </div>
+                            <button class="tc-detail-btn">
+                                <i class="fas fa-eye"></i>
+                                Lihat Detail
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ===== PAYMENT MODAL ===== -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-credit-card"></i>
+                    Pilih Metode Pembayaran
+                </h3>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="modal-tagihan-info">
+                    <span class="mti-label">Tagihan</span>
+                    <span class="mti-name" id="modalTagihanName">SPP November 2024</span>
+                    <span class="mti-amount" id="modalTagihanAmount">Rp 250.000</span>
+                </div>
+
+                <div class="payment-methods">
+                    <div class="pm-option active" data-method="qris">
+                        <div class="pm-icon">
+                            <i class="fas fa-qrcode"></i>
+                        </div>
+                        <div class="pm-info">
+                            <span class="pm-name">QRIS</span>
+                            <span class="pm-desc">Scan QR dari semua e-wallet</span>
+                        </div>
+                        <div class="pm-check">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+
+                    <div class="pm-option" data-method="bca">
+                        <div class="pm-icon bca">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <div class="pm-info">
+                            <span class="pm-name">BCA Virtual Account</span>
+                            <span class="pm-desc">Transfer via ATM atau m-Banking BCA</span>
+                        </div>
+                        <div class="pm-check">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+
+                    <div class="pm-option" data-method="mandiri">
+                        <div class="pm-icon mandiri">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div class="pm-info">
+                            <span class="pm-name">Mandiri Virtual Account</span>
+                            <span class="pm-desc">Transfer via ATM atau Livin' Mandiri</span>
+                        </div>
+                        <div class="pm-check">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="modal-cancel" id="modalCancel">Batal</button>
+                <button class="modal-pay" id="modalPay">
+                    <i class="fas fa-lock"></i>
+                    Lanjutkan Pembayaran
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SUCCESS MODAL ===== -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal-box success-modal">
+            <div class="success-animation">
+                <div class="success-circle">
+                    <i class="fas fa-check"></i>
+                </div>
+            </div>
+            <h3>Pembayaran Berhasil!</h3>
+            <p>Tagihan SPP November 2024 telah berhasil dibayar.</p>
+            <div class="success-detail">
+                <div class="sd-item">
+                    <span>No. Transaksi</span>
+                    <span>TRX-2024110015</span>
+                </div>
+                <div class="sd-item">
+                    <span>Metode</span>
+                    <span id="successMethod">QRIS</span>
+                </div>
+                <div class="sd-item">
+                    <span>Total</span>
+                    <span>Rp 250.000</span>
+                </div>
+                <div class="sd-item">
+                    <span>Status</span>
+                    <span class="sd-status">✅ Lunas</span>
+                </div>
+            </div>
+            <button class="modal-pay" id="successClose">
+                <i class="fas fa-home"></i>
+                Kembali ke Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script src="./js/dbSantri.js"></script>
+</body>
+</html>
