@@ -1747,3 +1747,15 @@ body {
         width: 100%;
     }
 }
+
+.logo-img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    border-radius: 12px;
+}
+
+.card-ai::before { background: linear-gradient(135deg, var(--gold), var(--green)); }
+.card-ai .sc-icon {
+    background: linear-gradient(135deg, var(--gold), var(--green));
+    color: #3D5300;
+}

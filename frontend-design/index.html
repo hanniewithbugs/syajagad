@@ -14,7 +14,7 @@
         <div class="nav-container">
             <div class="logo">
                 <div class="logo-icon">
-                    <i class="fas fa-mosque"></i>
+                    <img src="../frontend-design/assets/images/logo.jpg" alt="SyaJagad" class="logo-img">
                 </div>
                 <span>SyaJagad</span>
             </div>
@@ -93,37 +93,63 @@
                 </div>
             </div>
             
-            <!-- Right Illustration (Mobile App Style) -->
-            <div class="hero-illustration">
-                <div class="app-preview">
-                    <div class="phone-frame">
-                        <div class="phone-screen">
-                            <!-- Payment Success Animation -->
-                            <div class="payment-success">
-                                <div class="success-circle">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <div class="payment-amount">Lunas</div>
-                                <div class="payment-status">Pembayaran Berhasil!</div>
-                            </div>
-                            
-                            <!-- Quick Actions -->
-                            <div class="quick-actions">
-                                <div class="action-btn">
-                                    <i class="fas fa-qrcode"></i>
-                                    <span>QRIS</span>
-                                </div>
-                                <div class="action-btn active">
-                                    <i class="fas fa-university"></i>
-                                    <span>Transfer</span>
-                                </div>
-                                <div class="action-btn">
-                                    <i class="fas fa-history"></i>
-                                    <span>Riwayat</span>
-                                </div>
-                            </div>
-                        </div>
+ <!-- Right Illustration (Mobile App Style) - FIXED -->
+<div class="hero-illustration">
+    <div class="app-preview">
+        <!-- Phone Frame -->
+        <div class="phone-frame">
+            <!-- Notch/Speaker -->
+            <div class="phone-notch"></div>
+            
+            <!-- Screen Content -->
+            <div class="phone-screen">
+                <!-- Status Bar -->
+                <div class="status-bar">
+                    <span>09:41</span>
+                    <div class="signal-bars">
+                        <span></span><span></span><span></span>
                     </div>
+                </div>
+                
+                <!-- Payment Success -->
+                <div class="payment-success">
+                    <div class="success-circle">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="payment-amount">Rp 250.000</div>
+                    <div class="payment-status">Pembayaran Berhasil!</div>
+                    <div class="payment-detail">SPP Januari 2024</div>
+                </div>
+                
+                <!-- Quick Actions - FIXED SPACING -->
+                <div class="quick-actions">
+                    <button class="action-btn" type="button" aria-label="QRIS">
+                        <i class="fas fa-qrcode"></i>
+                        <span>QRIS</span>
+                    </button>
+                    <button class="action-btn active" type="button" aria-label="Transfer">
+                        <i class="fas fa-university"></i>
+                        <span>Transfer</span>
+                    </button>
+                    <button class="action-btn" type="button" aria-label="Riwayat">
+                        <i class="fas fa-history"></i>
+                        <span>Riwayat</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Home Indicator -->
+            <div class="home-indicator"></div>
+        </div>
+        
+        <!-- Floating Elements -->
+        <div class="floating-elements">
+            <div class="floating-qr"><i class="fas fa-qrcode"></i></div>
+            <div class="floating-card"><i class="fas fa-credit-card"></i></div>
+            <div class="floating-coin">Rp</div>
+        </div>
+    </div>
+</div>
                     
                     <!-- Floating Elements -->
                     <div class="floating-elements">
