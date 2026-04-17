@@ -1759,3 +1759,166 @@ body {
     background: linear-gradient(135deg, var(--gold), var(--green));
     color: #3D5300;
 }
+
+/* ===========================
+   PROFILE PAGE
+=========================== */
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 1.25rem;
+}
+
+.profile-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.75rem;
+    transition: var(--transition);
+}
+
+.profile-field:hover {
+    background: white;
+    border-color: var(--gray-300);
+    box-shadow: var(--shadow-sm);
+}
+
+.profile-field label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.profile-value {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-align: right;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Password Field Special */
+.password-field {
+    position: relative;
+    justify-content: flex-end !important;
+}
+
+.password-field span {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.05em;
+}
+
+.show-password {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    color: var(--text-secondary);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    transition: var(--transition);
+}
+
+.show-password:hover {
+    background: var(--gray-200);
+    color: var(--text-primary);
+    border-color: var(--gray-300);
+}
+
+/* Profile Actions */
+.profile-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-100);
+    margin-top: 1rem;
+}
+
+.btn-primary,
+.btn-secondary {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.25rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    border: none;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: #3D5300;
+    box-shadow: var(--shadow-gold);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(255,227,26,0.4);
+}
+
+.btn-secondary {
+    background: var(--gray-100);
+    color: var(--text-secondary);
+    border: 1px solid var(--gray-200);
+}
+
+.btn-secondary:hover {
+    background: var(--gray-200);
+    color: var(--text-primary);
+    border-color: var(--gray-300);
+}
+
+/* Responsive Profile */
+@media (max-width: 768px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-actions {
+        flex-direction: column;
+    }
+    
+    .profile-field {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .profile-value {
+        text-align: left !important;
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .password-field {
+        width: 100%;
+        justify-content: flex-end !important;
+    }
+}
+
+/* Edit Mode (Future) */
+.profile-field.editing {
+    background: rgba(255,227,26,0.05);
+    border-color: var(--gold);
+}
+
+.profile-field.editing label {
+    color: var(--gold-dark);
+}
+
