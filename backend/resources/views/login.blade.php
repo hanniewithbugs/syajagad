@@ -27,29 +27,36 @@
         <!-- Right Form -->
         <div class="auth-form">
             <div class="form-header">
-                <a href="./index.html" class="back-btn">
+                <a href="{{ url('/') }}" class="back-btn">
                     <i class="fas fa-arrow-left"></i>
                 </a>
                 <h2>Masuk ke Sistem</h2>
                 <p>Silahkan login dengan akun santri atau admin</p>
             </div>
 
-            <form class="login-form" id="loginForm">
+            <form method="POST" action="{{ route('login') }}" class="login-form">
+                @csrf
+                @if(session('error'))
+                    <div class="alert-error" style="margin-bottom:12px;color:#b91c1c;background:#fee2e2;padding:10px 12px;border-radius:8px;">
+                        {{ session('error') }}
+                    </div>
+                @endif
                 <!-- Username/Email -->
                 <div class="input-group">
                     <label>NIS / Email *</label>
                     <div class="input-wrapper">
                         <i class="fas fa-user"></i>
-                        <input type="text" id="loginUsername" placeholder="Masukkan NIS atau Email" required>
+                        <input type="text" name="email" placeholder="Masukkan NIS atau Email" required>
                     </div>
                 </div>
+
 
                 <!-- Role Selector -->
                 <div class="input-group">
                     <label>Pilih Peran *</label>
                     <div class="input-wrapper select-wrapper">
                         <i class="fas fa-user-tag"></i>
-                        <select id="loginRole" required>
+                        <select id="loginRole" name="role" required>
                             <option value="">-- Pilih Peran --</option>
                             <option value="santri">Santri</option>
                             <option value="admin">Admin</option>
@@ -63,7 +70,7 @@
                     <label>Password *</label>
                     <div class="input-wrapper">
                         <i class="fas fa-lock"></i>
-                        <input type="password" id="loginPassword" placeholder="Masukkan password" required>
+                        <input type="password" id="loginPassword" name="password" placeholder="Masukkan password" required>
                         <i class="fas fa-eye toggle-password" data-target="loginPassword"></i>
                     </div>
                 </div>
@@ -85,7 +92,7 @@
             <!-- Register Link -->
             <div class="auth-footer">
                 <p>Belum punya akun?</p>
-                <a href="register.html" class="register-link">
+                <a href="{{ route('register') }}" class="register-link">
                     Daftar Sekarang
                 </a>
             </div>

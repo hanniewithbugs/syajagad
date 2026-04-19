@@ -1,0 +1,4 @@
+- [x] 1) Perbaiki lokasi route ke `backend/routes/web.php` + import `AuthController`
+- [x] 2) Koreksi `backend/resources/views/login.blade.php` (name input + error handling)
+- [ ] 3) Verifikasi asset CSS/JS dan alur submit login
+- [ ] 4) (Opsional) rapikan controller validasi login bila diperlukan
