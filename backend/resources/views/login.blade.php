@@ -15,7 +15,7 @@
             <div class="illustration-content">
                 <div class="logo-large">
                     <i class="fas fa-mosque"></i>
-                    <span>SIJAGAD</span>
+                    <span>SyaJagad</span>
                 </div>
                 <h1>Selamat Datang Kembali</h1>
                 <p>Sistem pembayaran SPP santri & administrasi Pondok Pesantren</p>
