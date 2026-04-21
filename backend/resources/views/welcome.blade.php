@@ -105,20 +105,47 @@
             <div class="phone-screen">
                 <!-- Status Bar -->
                 <div class="status-bar">
-                    <span>09:41</span>
+                    <span id="wib-time">--:--</span>
                     <div class="signal-bars">
                         <span></span><span></span><span></span>
                     </div>
                 </div>
                 
-                <!-- Payment Success -->
-                <div class="payment-success">
-                    <div class="success-circle">
-                        <i class="fas fa-check"></i>
+                <!-- Payment Timeline -->
+                <div class="payment-success payment-timeline-card">
+                    <div class="payment-header">
+                        <span class="payment-method-badge"><i class="fas fa-qrcode"></i> QRIS</span>
+                        <span class="payment-ref">TRX#A7K29</span>
                     </div>
-                    <div class="payment-amount">Rp 250.000</div>
-                    <div class="payment-status">Pembayaran Berhasil!</div>
-                    <div class="payment-detail">SPP Januari 2024</div>
+
+                    <div class="timeline-title">Status Transaksi</div>
+                    <div class="timeline-subtitle">SPP Januari 2026</div>
+
+                    <div class="payment-timeline">
+                        <div class="timeline-step done">
+                            <div class="step-icon"><i class="fas fa-receipt"></i></div>
+                            <div class="step-content">
+                                <div class="step-title">Inisiasi Pembayaran</div>
+                                <div class="step-meta">09:40 WIB</div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-step done">
+                            <div class="step-icon"><i class="fas fa-shield-check"></i></div>
+                            <div class="step-content">
+                                <div class="step-title">Verifikasi Sistem</div>
+                                <div class="step-meta">09:41 WIB</div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-step done">
+                            <div class="step-icon"><i class="fas fa-circle-check"></i></div>
+                            <div class="step-content">
+                                <div class="step-title">Sukses Tercatat</div>
+                                <div class="step-meta">Nominal Disembunyikan</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Quick Actions - FIXED SPACING -->
@@ -141,15 +168,7 @@
             <!-- Home Indicator -->
             <div class="home-indicator"></div>
         </div>
-        
-        <!-- Floating Elements -->
-        <div class="floating-elements">
-            <div class="floating-qr"><i class="fas fa-qrcode"></i></div>
-            <div class="floating-card"><i class="fas fa-credit-card"></i></div>
-            <div class="floating-coin">Rp</div>
-        </div>
-    </div>
-</div>
+    
                     
                     <!-- Floating Elements -->
                     <div class="floating-elements">
@@ -195,9 +214,70 @@
                     <p>Menyediakan pengalaman pengguna yang optimal untuk berbagai jenis pengguna.</p>
                 </div>
             </div>
+
+            <div class="contact-info-card">
+                <div class="contact-header">
+                    <h3>Informasi Kontak Pondok</h3>
+                    <p>Hubungi kami untuk informasi pendaftaran, administrasi, dan pembayaran.</p>
+                </div>
+
+                <div class="contact-grid">
+                    <div class="contact-item">
+                        <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <div class="contact-content">
+                            <span class="contact-label">Alamat</span>
+                            <span class="contact-value">Jl. Jetis Kulon VI No.16A, Wonokromo, Kec. Wonokromo, Surabaya, Jawa Timur 60231</span>
+                        </div>
+                    </div>
+
+                    <a class="contact-item contact-link" href="https://instagram.com/ponpes_ja" target="_blank" rel="noopener noreferrer">
+                        <div class="contact-icon"><i class="fab fa-instagram"></i></div>
+                        <div class="contact-content">
+                            <span class="contact-label">Instagram</span>
+                            <span class="contact-value">@ponpes_ja</span>
+                        </div>
+                    </a>
+
+                    <a class="contact-item contact-link" href="mailto:jagad_alimussirry99@yahoo.co.id">
+                        <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+                        <div class="contact-content">
+                            <span class="contact-label">Email</span>
+                            <span class="contact-value">jagad_alimussirry99@yahoo.co.id</span>
+                        </div>
+                    </a>
+
+                    <a class="contact-item contact-link" href="tel:+6282136212570">
+                        <div class="contact-icon"><i class="fas fa-phone-alt"></i></div>
+                        <div class="contact-content">
+                            <span class="contact-label">Telepon</span>
+                            <span class="contact-value">+62 821-3621-2570</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
         </div>
     </section>
 
     <script src="{{ asset('js/script.js') }}"></script>
+    <script>
+        (function () {
+            const wibTimeEl = document.getElementById('wib-time');
+            if (!wibTimeEl) return;
+
+            const wibFormatter = new Intl.DateTimeFormat('id-ID', {
+                timeZone: 'Asia/Jakarta',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+
+            function updateWibTime() {
+                wibTimeEl.textContent = wibFormatter.format(new Date()).replace('.', ':');
+            }
+
+            updateWibTime();
+            setInterval(updateWibTime, 1000 * 60);
+        })();
+    </script>
 </body>
 </html>
