@@ -18,7 +18,7 @@
                     <span>SyaJagad</span>
                 </div>
                 <h1>Selamat Datang Kembali</h1>
-                <p>Sistem pembayaran SPP santri & administrasi Pondok Pesantren</p>
+                <p>Sistem pembayaran SPP santri & administrasi Pondok Pesantren Mahasiswa Jagad 'Alimussirry</p>
                 <div class="floating-cards">
                 </div>
             </div>

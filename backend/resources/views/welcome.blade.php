@@ -43,7 +43,7 @@
                     <span class="gradient-text">Lebih Mudah</span>
                 </h1>
                 <p class="hero-subtitle">
-                    Dengan aplikasi ini, pembyaran menjadi lebih mudah
+                    Dengan aplikasi ini, pembayaran menjadi lebih mudah
                 </p>
                 
                 <!-- Stats Cards -->
