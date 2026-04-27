@@ -674,24 +674,28 @@ body {
    SUMMARY CARDS - EXPANDED
 =========================== */
 .summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.25rem;
+     display: grid;
+    grid-template-columns: repeat(2, 1fr); 
+    grid-auto-rows: minmax(140px, auto); 
+    gap: 2rem 2.5rem; 
+    max-width: 720px; 
+    margin: 0 auto; 
+    padding: 1rem 0;
 }
 
 .summary-card {
     background: white;
-    border-radius: var(--radius-md);
-    padding: 1.75rem;
+    border-radius: 0 0 16px 16px; /* rounding hanya sudut bawah */
+    padding: 1.5rem 1.8rem;
+    box-shadow: 0 8px 16px rgb(0 0 0 / 0.08);
+    cursor: default;
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 1.25rem;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--gray-200);
-    cursor: pointer;
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
+    gap: 1.5rem;
+    transition: box-shadow 0.3s ease;
+    user-select: none;
+    border-bottom: 6px solid transparent;
 }
 
 .summary-card::before {
@@ -755,6 +759,14 @@ body {
 .sc-sub {
     font-size: 0.78rem;
     color: var(--text-light);
+}
+
+@media (max-width: 480px) {
+    .dashboard-summary-cards {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+        gap: 1.5rem 0;
+    }
 }
 
 /* ===========================
@@ -1502,148 +1514,394 @@ body {
     .modal-cancel {
         width: 100%;
     }
-}
+}    
 
-/* ===== DASHBOARD MODIFIED ===== */
-.dashboard-modified {
-    display: flex;
-    flex-direction: column;
-    gap: 2.5rem;
-}
-
-/* Header */
-.dashboard-header {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
+/* ===== DASHBOARD LAYOUT ===== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1.5rem;
-    border-bottom: 1px solid var(--gray-300);
-    padding-bottom: 1rem;
+    margin-bottom: 2rem;
 }
 
-.dashboard-header h1 {
-    font-weight: 900;
-    font-size: 2.25rem;
-    color: var(--text-primary);
-    flex: 1 1 300px;
-}
-
-.dashboard-subtitle {
-    font-weight: 400;
-    font-size: 1rem;
-    color: var(--gray-600);
-    flex: 1 1 400px;
-}
-
-.dashboard-user-info {
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 16px;
     display: flex;
-    align-items: center;
+    gap: 1rem;
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid;
+    transition: var(--transition);
+}
+
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+.stat-card.success { border-left-color: var(--green); }
+.stat-card.danger { border-left-color: var(--red); }
+.stat-card.primary { border-left-color: var(--gold-dark); }
+
+.stat-icon { 
+    width: 50px; height: 50px; 
+    border-radius: 12px; 
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; color: white; flex-shrink: 0;
+}
+
+.stat-card.success .stat-icon { background: var(--green); }
+.stat-card.danger .stat-icon { background: var(--red); }
+.stat-card.primary .stat-icon { background: var(--gold-dark); }
+
+.stat-content .stat-label { 
+    font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; 
+}
+.stat-content .stat-value { 
+    font-size: 2rem; font-weight: 800; color: var(--text-primary); 
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
     gap: 2rem;
-    flex-shrink: 0;
+    margin-bottom: 2rem;
 }
 
-.dashboard-user-name {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: var(--text-primary);
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.dashboard-user-name i {
-    font-size: 2.2rem;
-    color: var(--green-dark);
-}
-
-.dashboard-user-name small {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--gray-500);
-}
-
-.dashboard-user-icons button {
-    background: transparent;
-    border: none;
-    font-size: 1.3rem;
-    color: var(--gray-600);
-    cursor: pointer;
-    margin-left: 0.5rem;
-}
-
-.dashboard-user-icons button:hover {
-    color: var(--green-dark);
-}
-
-/* Summary Cards */
-.dashboard-summary-cards {
+.summary-row {
     display: flex;
     gap: 2rem;
-    flex-wrap: wrap;
+    justify-content: space-around;
 }
 
-.summary-card {
+.summary-item {
+    flex: 1;
+    text-align: center;
+    padding: 2rem;
     background: white;
     border-radius: 16px;
     box-shadow: var(--shadow-sm);
-    padding: 1.5rem 1.75rem;
-    width: 220px;
+}
+
+.summary-item.primary { border-top: 4px solid var(--gold-dark); }
+.summary-item.success { border-top: 4px solid var(--green); }
+.summary-item.danger { border-top: 4px solid var(--red); }
+
+.summary-value { font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem; }
+.summary-label { font-size: 1rem; color: var(--text-secondary); }
+
+/* ===== DATA SANTRI & PEMBAYARAN ===== */
+.data-table.compact td { padding: 1rem 0.75rem; font-size: 0.9rem; }
+.status-pill {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.status-pill.lunas { background: rgba(34,197,94,0.2); color: var(--green); }
+.status-pill.belum { background: rgba(239,68,68,0.2); color: var(--red); }
+
+/* ===== LAPORAN ===== */
+.report-filters { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    flex-wrap: wrap; 
+    gap: 1rem; 
+    background: white; 
+    padding: 1.5rem; 
+    border-radius: 16px; 
+    margin-bottom: 2rem; 
+}
+
+.report-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.report-card {
+    background: linear-gradient(135deg, #1e40af, #3b82f6);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    display: flex;
+    gap: 1rem;
+}
+
+.report-icon {
+    width: 50px; height: 50px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.chart-container {
+    position: relative;
+    height: 250px;
+}
+
+.chart-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* ===== PENGATURAN ===== */
+.settings-section,
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-input.green-border {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid var(--green);
+    border-radius: 12px;
+    font-size: 0.95rem;
+    transition: var(--transition);
+}
+
+.form-input.green-border:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
+}
+
+.toggle-item {
     display: flex;
     align-items: center;
     gap: 1rem;
-    border-bottom: 8px solid transparent;
-    cursor: default;
-    transition: box-shadow 0.3s ease;
+    cursor: pointer;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: 12px;
+    margin-bottom: 1rem;
 }
 
-.summary-card:hover {
+.toggle-switch {
+    width: 44px;
+    height: 24px;
+    background: var(--gray-300);
+    border-radius: 12px;
+    position: relative;
+    transition: var(--transition);
+}
+
+.toggle-item input:checked + .toggle-switch {
+    background: var(--green);
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    top: 2px;
+    left: 2px;
+    transition: var(--transition);
+}
+
+.toggle-item input:checked + .toggle-switch::after {
+    transform: translateX(20px);
+}
+
+.date-picker-group {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.date-picker-group label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
+.date-picker-group input[type="date"] {
+    padding: 0.75rem;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+}
+
+.btn-primary.full-width { width: 100%; margin-top: 1rem; }
+
+.payment-detail-table {
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.payment-detail-table th,
+.payment-detail-table td {
+    padding: 1rem;
+    text-align: left;
+}
+
+.total-payment {
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--gray-50);
+    border-radius: 12px;
+    color: var(--green);
+}
+
+.info-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.info-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    display: flex;
+    gap: 1.5rem;
     box-shadow: var(--shadow-md);
+    border-left: 5px solid;
+}
+
+.info-card.warning { border-left-color: var(--orange); }
+.info-card.success { border-left-color: var(--green); }
+
+.info-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: white;
+}
+
+.info-card.warning .info-icon { background: var(--orange); }
+.info-card.success .info-icon { background: var(--green); }
+
+.info-value { font-size: 1.8rem; font-weight: 800; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .dashboard-grid,
+    .charts-grid,
+    .settings-grid { grid-template-columns: 1fr; }
+    .info-cards { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+    .stats-grid,
+    .report-summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .summary-row { flex-direction: column; }
+}
+.report-filters {
+    overflow: visible !important; 
+    position: relative; 
+    z-index: 10; 
+}
+
+.report-filters input[type="date"] {
+    position: relative; 
+    z-index: 20; 
+}
+
+.report-filters > * {
+    overflow: visible !important;
+}
+
+.filter-wrapper {
+    overflow: visible !important;
+    position: relative;
+}
+
+/* ===== Container utama halaman dashboard ===== */
+#page-dashboard .page-content {
+    background-color: #f9fafb; /* abu muda cerah */
+    padding: 2rem 3rem;
+    min-height: calc(100vh - var(--topbar-h));
+    font-family: 'Inter', sans-serif;
+    color: #111827;
+    box-sizing: border-box;
+}
+
+/* ===== Header ===== */
+#page-dashboard .page-header h2 {
+    font-weight: 700;
+    font-size: 1.8rem;
+    margin-bottom: 0.2rem;
+    color: #111827;
+}
+
+#page-dashboard .page-header p {
+    font-weight: 400;
+    font-size: 0.95rem;
+    margin-top: 0;
+    margin-bottom: 2rem;
+    color: #6b7280;
+}
+
+/* ===== Grid kartu statistik ===== */
+.dashboard-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.2rem;
+    margin-bottom: 2.8rem;
+}
+
+/* Kartu Statistik */
+.summary-card {
+    background-color: white;
+    padding: 1.25rem 1.8rem;
+    border-radius: 0 0 16px 16px; /* rounding bawah tegas */
+    box-shadow: 0 1px 5px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: default;
+    user-select: none;
+    position: relative;
 }
 
 .summary-card .icon {
-    font-size: 2.2rem;
     flex-shrink: 0;
+    font-size: 1.7rem;
 }
 
-.summary-card .content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-}
-
-.summary-card .label {
-    font-weight: 600;
-    font-size: 0.85rem;
-    color: var(--gray-600);
-}
-
-.summary-card .value {
-    font-weight: 900;
-    font-size: 1.9rem;
-    color: var(--text-primary);
-    line-height: 1;
-}
-
-.summary-card .sub {
-    font-weight: 600;
-    font-size: 0.85rem;
-    color: var(--gray-500);
-}
-
-/* Color variations */
+/* Warna dan icon untuk tiap kartu */
 .summary-card.yellow {
-    border-bottom-color: #f1d308;
-    color: #a68600;
+    border-bottom: 5px solid #facc15;
+    color: #b45309;
 }
 
 .summary-card.yellow .icon {
-    color: #f1d308;
+    color: #eab308;
 }
 
 .summary-card.blue {
-    border-bottom-color: #2563eb;
-    color: #1d3f9a;
+    border-bottom: 5px solid #2563eb;
+    color: #1e40af;
 }
 
 .summary-card.blue .icon {
@@ -1651,187 +1909,389 @@ body {
 }
 
 .summary-card.green-dark {
-    border-bottom-color: #065f46;
-    color: #064e3b;
+    border-bottom: 5px solid #14532d;
+    color: #166534;
 }
 
 .summary-card.green-dark .icon {
-    color: #065f46;
+    color: #22c55e;
 }
 
 .summary-card.red {
-    border-bottom-color: #dc2626;
-    color: #a52828;
+    border-bottom: 5px solid #dc2626;
+    color: #b91c1c;
 }
 
 .summary-card.red .icon {
-    color: #dc2626;
+    color: #ef4444;
 }
 
-/* Dashboard main grid */
+/* Isi kartu: teks label & angka */
+.summary-card .content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    font-weight: 600;
+}
+
+.summary-card .label {
+    font-size: 0.95rem;
+    color: currentColor;
+}
+
+.summary-card .value {
+    font-weight: 900;
+    font-size: 1.8rem;
+    color: #111827;
+}
+
+.summary-card .sub {
+    font-size: 0.85rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* ===== Grid besar untuk tabel & grafik ===== */
 .dashboard-main-grid {
     display: grid;
-    grid-template-columns: 1.65fr 1fr;
+    grid-template-columns: 2.3fr 1fr;
     gap: 2rem;
-    flex-wrap: wrap;
+    margin-bottom: 2rem;
 }
 
-/* Pembayaran Terbaru */
+/* ===== Tabel Pembayaran ===== */
 .payment-latest {
-    background: white;
-    border-radius: 16px;
-    padding: 1.5rem 2rem;
-    box-shadow: var(--shadow-sm);
+    background-color: white;
+    border-radius: 14px;
+    padding: 2rem;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
     overflow-x: auto;
 }
 
 .payment-latest h2 {
-    font-weight: 700;
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: #111827;
+    margin-bottom: 1.2rem;
 }
 
+/* Tabel styling */
 .payment-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0 12px;
     font-size: 0.9rem;
+    color: #374151;
 }
 
-.payment-table thead tr {
-    background: var(--gray-100);
-}
-
-.payment-table th,
-.payment-table td {
-    padding: 0.9rem 1rem;
+.payment-table thead tr th {
     text-align: left;
-    border-bottom: 1px solid var(--gray-200);
-    white-space: nowrap;
+    padding: 0.8rem 1rem;
+    font-weight: 600;
+    color: #6b7280;
+    background: #f3f4f6;
+    border-radius: 10px;
+    user-select: none;
+}
+
+.payment-table tbody tr {
+    background: #ffffff;
+    transition: background-color 0.25s ease;
+    border-radius: 12px;
+    color: #4b5563;
 }
 
 .payment-table tbody tr:hover {
-    background: var(--gray-50);
+    background-color: #f9fafb;
 }
 
+.payment-table tbody td {
+    padding: 0.95rem 1rem;
+    vertical-align: middle;
+    border: none;
+}
+
+/* Status Lunas dan Belum Lunas */
 .status {
     display: inline-block;
-    padding: 0.3rem 0.9rem;
-    border-radius: 12px;
-    font-weight: 600;
     font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.25rem 0.9rem;
+    border-radius: 9999px;
+    color: #065f46;
+    background-color: #bbf7d0;
+    user-select: none;
     text-align: center;
-    min-width: 94px;
-}
-
-.status.paid {
-    background-color: #dcfce7;
-    color: #166534;
 }
 
 .status.unpaid {
-    background-color: #fee2e2;
-    color: #991b1b;
+    color: #9f1239;
+    background-color: #fecaca;
 }
 
-/* Grafik Pembayaran */
+/* ===== Grafik Pembayaran ===== */
 .payment-chart-section {
-    background: white;
-    border-radius: 16px;
-    padding: 1.5rem 1.8rem;
-    box-shadow: var(--shadow-sm);
+    background-color: white;
+    border-radius: 14px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    padding: 2rem 1.8rem 2.4rem;
     display: flex;
     flex-direction: column;
+    align-items: center;
 }
 
 .payment-chart-section h2 {
     font-weight: 700;
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    color: #111827;
+    margin-bottom: 1.4rem;
+    width: 100%;
     display: flex;
-    align-items: center;
     gap: 0.5rem;
-    color: var(--text-primary);
+    align-items: center;
 }
 
-/* Tagihan Summary Cards */
-.tagihan-summary-cards {
-    margin-top: 1.5rem;
+/* Canvas grafik */
+.payment-chart-section canvas {
+    max-width: 100%;
+    height: 210px !important;
+}
+
+/* Label bulan bawah grafik */
+.payment-chart-section > div:last-child {
+    margin-top: 1.2rem;
     display: flex;
-    gap: 1.7rem;
+    justify-content: space-around;
+    font-size: 0.8rem;
+    width: 100%;
+    max-width: 400px;
+    color: #6b7280;
+}
+
+/* ===== Ringkasan Tagihan bawah ===== */
+.tagihan-summary-cards {
+    display: flex;
     justify-content: space-between;
+    gap: 1.8rem;
+    flex-wrap: wrap;
+    padding-top: 1rem;
 }
 
 .tagihan-card {
     background: white;
-    border-radius: 16px;
-    box-shadow: var(--shadow-sm);
-    padding: 1rem 1.5rem;
+    border-radius: 14px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    padding: 1.5rem 1.8rem;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    width: 30%;
+    gap: 1.1rem;
+    min-width: 230px;
+    cursor: default;
 }
 
 .tagihan-card .icon {
     font-size: 2rem;
+    color: #111827;
     flex-shrink: 0;
-    color: var(--text-primary);
+}
+
+/* Variant warna border kiri */
+.tagihan-card.total-tagihan {
+    border-left: 5px solid #065f46;
+}
+
+.tagihan-card.paid-tagihan {
+    border-left: 5px solid #16a34a;
+}
+
+.tagihan-card.sisa-tagihan {
+    border-left: 5px solid #b45309; /* kuning kehijauan */
+}
+
+.tagihan-card .content {
+    display: flex;
+    flex-direction: column;
 }
 
 .tagihan-card .label {
-    font-size: 0.85rem;
     font-weight: 600;
-    color: var(--gray-600);
+    font-size: 1rem;
+    color: #6b7280;
 }
 
 .tagihan-card .value {
+    color: #111827;
     font-weight: 900;
-    font-size: 1.4rem;
-    color: var(--text-primary);
+    font-size: 1.6rem;
 }
 
-/* Color variants */
-.tagihan-card.total-tagihan .icon {
-    color: #065f46;
-}
-
-.tagihan-card.paid-tagihan .icon {
-    color: #166534;
-}
-
-.tagihan-card.sisa-tagihan .icon {
-    color: #7c2d12;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
+/* Responsif */
+@media (max-width: 900px) {
+    .dashboard-summary-cards {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
     .dashboard-main-grid {
         grid-template-columns: 1fr;
+        gap: 2rem;
     }
     .tagihan-summary-cards {
-        width: 100%;
-        justify-content: space-around;
+        justify-content: center;
     }
     .tagihan-card {
-        width: 30%;
+        min-width: 320px;
+        width: 100%;
     }
 }
 
-@media (max-width: 480px) {
-    .dashboard-summary-cards {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    .tagihan-summary-cards {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: center;
-    }
-    .tagihan-card {
-        width: 90%;
-    }
+.welcome-banner {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-2) 60%, #1a2a4a 100%);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--shadow-lg);
+}
+
+.welcome-banner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-dark), var(--green));
+}
+
+.welcome-banner::after {
+    content: '';
+    position: absolute;
+    top: -50px; right: -50px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(255,227,26,0.08), transparent);
+    border-radius: 50%;
+}
+
+.welcome-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    z-index: 1;
+}
+
+.welcome-greeting {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.7);
+    font-weight: 500;
+}
+
+.greeting-emoji { font-size: 1.1rem; }
+
+.welcome-left h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: white;
+    letter-spacing: -0.02em;
+}
+
+.welcome-left p {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.95rem;
+    max-width: 400px;
+}
+
+.welcome-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: #3D5300;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 0.875rem 1.75rem;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: var(--transition);
+    box-shadow: var(--shadow-gold);
+    width: fit-content;
+    margin-top: 0.5rem;
+}
+
+.welcome-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(255,227,26,0.4);
+}
+
+/* Welcome Illustration */
+.welcome-right { z-index: 1; }
+
+.welcome-illustration {
+    position: relative;
+    width: 160px;
+    height: 140px;
+}
+
+.wi-mosque {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 5rem;
+    background: linear-gradient(135deg, var(--green), var(--green-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(34,197,94,0.5));
+    animation: mosqueGlow 3s ease-in-out infinite alternate;
+}
+
+.wi-coins {
+    position: absolute;
+    width: 100%; height: 100%;
+}
+
+.wi-coin {
+    position: absolute;
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 900;
+    color: #3D5300;
+    box-shadow: 0 8px 20px rgba(255,227,26,0.4);
+}
+
+.wi-coin.c1 {
+    top: 0; right: 10px;
+    animation: coinFloat 3s ease-in-out infinite;
+}
+.wi-coin.c2 {
+    bottom: 10px; right: 0;
+    animation: coinFloat 3s ease-in-out infinite 1s;
+    width: 28px; height: 28px;
+    font-size: 0.6rem;
+}
+.wi-coin.c3 {
+    top: 20px; left: 0;
+    animation: coinFloat 3s ease-in-out infinite 2s;
+    width: 24px; height: 24px;
+    font-size: 0.55rem;
+}
+
+@keyframes mosqueGlow {
+    0% { filter: drop-shadow(0 0 15px rgba(34,197,94,0.4)); }
+    100% { filter: drop-shadow(0 0 30px rgba(34,197,94,0.8)); }
+}
+
+@keyframes coinFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(15deg); }
 }

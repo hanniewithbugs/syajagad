@@ -1,66 +1,63 @@
-// dbAdmin.js
+// admin-dashboard.js
 class SyaJagadAdminDashboard {
     constructor() {
         this.adminData = {
-            name: "Admin Utama",
+            name: "Admin Ponpes JA",
             role: "Super Admin",
-            totalSantri: 1245,
-            totalPaid: 45200000,
-            totalUnpaid: 23,
-            totalPemasukan: 45200000,
+            totalSantri: 120,
+            totalPaid: 85,
+            totalUnpaid: 35,
+            totalPemasukan: 42500000,
             totalTagihan: 50000000,
-            sisaTagihan: 4800000
+            sisaTagihan: 7500000
         };
 
         this.santriData = [
-            { id: 1, nama: "Ahmad Santoso", nis: "2024001", kelamin: "Laki-laki", angkatan: "2024", status: "aktif", terakhirBayar: "01 Okt 2024" },
-            { id: 2, nama: "Siti Aisyah", nis: "2024002", kelamin: "Perempuan", angkatan: "2024", status: "cuti", terakhirBayar: "15 Sep 2024" },
-            { id: 3, nama: "Muhammad Rifqi", nis: "2024003", kelamin: "Laki-laki", angkatan: "2023", status: "aktif", terakhirBayar: "28 Okt 2024" },
-            // Add more sample data
+            { id: 1, nama: "Ahmad Santoso", nis: "2024001", kelamin: "Laki-laki", angkatan: "2024", status: "aktif" },
+            { id: 2, nama: "Siti Aisyah", nis: "2024002", kelamin: "Perempuan", angkatan: "2024", status: "cuti" },
+            { id: 3, nama: "Muhammad Rifqi", nis: "2024003", kelamin: "Laki-laki", angkatan: "2023", status: "aktif" },
+            { id: 4, nama: "Fatimah Zahra", nis: "2024004", kelamin: "Perempuan", angkatan: "2024", status: "aktif" },
+            { id: 5, nama: "Hassan Basri", nis: "2024005", kelamin: "Laki-laki", angkatan: "2023", status: "aktif" },
+            // Add more data as needed
+        ];
+
+        this.pembayaranData = [
+            { id: 1, nama: "Ahmad Santoso", nis: "2024001", kelamin: "L", angkatan: "2024", statusSantri: "Aktif", bulan: "Okt 2024", statusBayar: "lunas" },
+            { id: 2, nama: "Siti Aisyah", nis: "2024002", kelamin: "P", angkatan: "2024", statusSantri: "Cuti", bulan: "Okt 2024", statusBayar: "belum" },
+            { id: 3, nama: "Muhammad Rifqi", nis: "2024003", kelamin: "L", angkatan: "2023", statusSantri: "Aktif", bulan: "Okt 2024", statusBayar: "lunas" },
         ];
 
         this.pembayaranTerbaru = [
-            { nama: "Ahmad Santoso", bulan: "Okt 2024", tanggal: "01 Okt 2024", status: "lunas", jumlah: 250000 },
-            { nama: "Muhammad Rifqi", bulan: "Okt 2024", tanggal: "28 Okt 2024", status: "lunas", jumlah: 250000 },
-            { nama: "Fatimah Zahra", bulan: "Sep 2024", tanggal: "20 Sep 2024", status: "lunas", jumlah: 250000 },
+            { nama: "Ahmad Santoso", bulan: "Okt 2024", tanggal: "01 Okt 2024", status: "lunas" },
+            { nama: "Muhammad Rifqi", bulan: "Okt 2024", tanggal: "28 Okt 2024", status: "lunas" },
+            { nama: "Fatimah Zahra", bulan: "Sep 2024", tanggal: "20 Sep 2024", status: "lunas" },
         ];
 
-        this.currentPage = 1;
-        this.itemsPerPage = 10;
-        this.chartCtx = null;
-
+        this.currentPage = {};
+        this.itemsPerPage = 8;
         this.init();
     }
 
     init() {
+        this.currentPage = {
+            santri: 1,
+            pembayaran: 1
+        };
         this.updateUI();
         this.bindEvents();
-        this.renderDynamicContent();
+        this.renderAllPages();
         this.initCharts();
+        this.updateDateTime();
     }
 
     updateUI() {
-        // Update admin profile
-        document.getElementById('sidebarName').textContent = this.adminData.name;
-        document.getElementById('sidebarRole').textContent = this.adminData.role;
-        document.getElementById('topbarName').textContent = this.adminData.name;
-        document.querySelector('.tp-role').textContent = this.adminData.role;
-
-        // Update summary cards
-        document.getElementById('totalSantri').textContent = this.adminData.totalSantri.toLocaleString();
-        document.getElementById('totalPaid').textContent = this.formatRupiah(this.adminData.totalPaid / 1000) + 'M';
+        document.getElementById('totalSantri').textContent = this.adminData.totalSantri;
+        document.getElementById('totalPaid').textContent = this.adminData.totalPaid;
         document.getElementById('totalUnpaid').textContent = this.adminData.totalUnpaid;
-        document.getElementById('totalPemasukan').textContent = this.formatRupiah(this.adminData.totalPemasukan / 1000) + 'M';
+        document.getElementById('totalPemasukan').textContent = this.formatRupiah(this.adminData.totalPemasukan / 1000000) + 'M';
         document.getElementById('totalTagihan').textContent = this.formatRupiah(this.adminData.totalTagihan);
-        document.getElementById('totalBayar').textContent = this.formatRupiah(this.adminData.totalPaid);
+        document.getElementById('totalBayar').textContent = this.formatRupiah(this.adminData.totalPaid * 500000);
         document.getElementById('sisaTagihan').textContent = this.formatRupiah(this.adminData.sisaTagihan);
-
-        // Update badges
-        document.getElementById('santriBadge').textContent = this.adminData.totalSantri.toLocaleString();
-        document.getElementById('pembayaranBadge').textContent = this.adminData.totalUnpaid;
-
-        // Update date & greeting
-        this.updateDateTime();
     }
 
     bindEvents() {
@@ -77,18 +74,38 @@ class SyaJagadAdminDashboard {
             });
         });
 
+        // Search & Filter
+        document.getElementById('searchSantri')?.addEventListener('input', (e) => this.searchSantri(e.target.value));
+        document.getElementById('filterStatus')?.addEventListener('change', (e) => this.filterSantri(e.target.value));
+        document.getElementById('searchPembayaran')?.addEventListener('input', (e) => this.searchPembayaran(e.target.value));
+
+        // Notifications & Messages
+        document.getElementById('notifBtn').addEventListener('click', () => alert('Notifikasi (3 baru)'));
+        document.getElementById('messageBtn').addEventListener('click', () => alert('Pesan (2 baru)'));
+        
         // Logout
         document.getElementById('logoutLink').addEventListener('click', (e) => {
             e.preventDefault();
             this.showLogoutModal();
         });
 
-        // Admin actions
-        document.getElementById('searchSantri').addEventListener('input', (e) => this.searchSantri(e.target.value));
-        document.getElementById('filterStatus').addEventListener('change', (e) => this.filterSantri(e.target.value));
-
         // Modal handlers
         this.bindModalHandlers();
+
+        // Pagination global handlers
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.pagination-btn')) {
+                const page = parseInt(e.target.dataset.page);
+                const tableType = e.target.closest('.table-container').id.includes('santri') ? 'santri' : 'pembayaran';
+                if (!isNaN(page)) {
+                    this.currentPage[tableType] = page;
+                    this.renderTable(tableType);
+                }
+            }
+            if (e.target.closest('.btn-edit')) {
+                alert('Edit data: ' + e.target.closest('tr')?.querySelector('td:nth-child(2)')?.textContent);
+            }
+        });
     }
 
     toggleSidebar() {
@@ -113,51 +130,51 @@ class SyaJagadAdminDashboard {
         document.getElementById('breadcrumbCurrent').textContent = breadcrumbs[pageId] || pageId;
 
         this.toggleSidebar();
+        
         if (pageId === 'santri') this.renderSantriTable();
-        if (pageId === 'dashboard') this.renderDynamicContent();
+        if (pageId === 'pembayaran') this.renderPembayaranTable();
+        if (pageId === 'dashboard') this.renderPembayaranTerbaru();
     }
 
     bindModalHandlers() {
-        // Close modals
         document.querySelectorAll('.modal-close, .modal-cancel, #logoutCancel').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.target.closest('.modal-overlay').classList.remove('active');
             });
         });
 
-        // Logout confirm
         document.getElementById('confirmLogout').addEventListener('click', () => {
+            // Simulate logout and redirect
             setTimeout(() => {
-                window.location.href = '/login';
+                alert('Logout berhasil! Mengarahkan ke login.html...');
+                window.location.href = 'login.html';
             }, 500);
         });
     }
 
-    renderDynamicContent() {
+    renderAllPages() {
         this.renderPembayaranTerbaru();
-        this.updateBadges();
+        this.renderSantriTable();
+        this.renderPembayaranTable();
     }
 
     renderPembayaranTerbaru() {
         const container = document.getElementById('pembayaranTerbaruList');
+        if (!container) return;
+
         container.innerHTML = this.pembayaranTerbaru.map(pembayaran => `
-            <div class="table-row">
-                <div class="row-info">
-                    <span class="row-name">${pembayaran.nama}</span>
-                    <span class="row-meta">${pembayaran.bulan}</span>
-                </div>
-                <div class="row-date">${pembayaran.tanggal}</div>
-                <div class="row-status ${pembayaran.status}">
-                    <span class="status-badge">${pembayaran.status === 'lunas' ? 'Lunas' : 'Menunggak'}</span>
-                </div>
-                <div class="row-amount">${this.formatRupiah(pembayaran.jumlah)}</div>
-            </div>
+            <tr>
+                <td>${pembayaran.nama}</td>
+                <td>${pembayaran.bulan}</td>
+                <td>${pembayaran.tanggal}</td>
+                <td><span class="status ${pembayaran.status}">${pembayaran.status === 'lunas' ? 'Lunas' : 'Belum Lunas'}</span></td>
+            </tr>
         `).join('');
     }
 
     renderSantriTable() {
         const filteredData = this.getFilteredSantriData();
-        const start = (this.currentPage - 1) * this.itemsPerPage;
+        const start = (this.currentPage.santri - 1) * this.itemsPerPage;
         const end = start + this.itemsPerPage;
         const paginatedData = filteredData.slice(start, end);
 
@@ -169,21 +186,40 @@ class SyaJagadAdminDashboard {
                 <td>${santri.nis}</td>
                 <td>${santri.kelamin}</td>
                 <td>${santri.angkatan}</td>
-                <td><span class="status-badge ${santri.status}">${santri.status.toUpperCase()}</span></td>
-                <td>${santri.terakhirBayar}</td>
-                <td>
-                    <button class="btn-edit"><i class="fas fa-edit"></i></button>
-                    <button class="btn-delete"><i class="fas fa-trash"></i></button>
-                </td>
+                <td><span class="status-badge ${santri.status}">${santri.status.charAt(0).toUpperCase() + santri.status.slice(1)}</span></td>
+                <td><button class="btn-edit" title="Edit"><i class="fas fa-edit"></i></button></td>
             </tr>
         `).join('');
 
-        this.renderPagination(filteredData.length);
+        this.renderPagination('santri', filteredData.length);
+    }
+
+    renderPembayaranTable() {
+        const filteredData = this.getFilteredPembayaranData();
+        const start = (this.currentPage.pembayaran - 1) * this.itemsPerPage;
+        const end = start + this.itemsPerPage;
+        const paginatedData = filteredData.slice(start, end);
+
+        const tbody = document.getElementById('pembayaranTableBody');
+        tbody.innerHTML = paginatedData.map(pembayaran => `
+            <tr>
+                <td><input type="checkbox"></td>
+                <td>${pembayaran.nama}</td>
+                <td>${pembayaran.nis}</td>
+                <td>${pembayaran.kelamin}</td>
+                <td>${pembayaran.angkatan}</td>
+                <td><span class="status-badge ${pembayaran.statusSantri}">${pembayaran.statusSantri}</span></td>
+                <td>${pembayaran.bulan}</td>
+                <td><span class="status-pill ${pembayaran.statusBayar}">${pembayaran.statusBayar === 'lunas' ? 'Lunas' : 'Belum Lunas'}</span></td>
+            </tr>
+        `).join('');
+
+        this.renderPagination('pembayaran', filteredData.length);
     }
 
     getFilteredSantriData() {
-        const searchTerm = document.getElementById('searchSantri').value.toLowerCase();
-        const statusFilter = document.getElementById('filterStatus').value;
+        const searchTerm = document.getElementById('searchSantri')?.value.toLowerCase() || '';
+        const statusFilter = document.getElementById('filterStatus')?.value || '';
 
         return this.santriData.filter(santri => {
             const matchesSearch = santri.nama.toLowerCase().includes(searchTerm) ||
@@ -194,83 +230,82 @@ class SyaJagadAdminDashboard {
         });
     }
 
+    getFilteredPembayaranData() {
+        const searchTerm = document.getElementById('searchPembayaran')?.value.toLowerCase() || '';
+        return this.pembayaranData.filter(pembayaran => 
+            pembayaran.nama.toLowerCase().includes(searchTerm) ||
+            pembayaran.nis.includes(searchTerm) ||
+            pembayaran.angkatan.includes(searchTerm)
+        );
+    }
+
     searchSantri(query) {
-        this.currentPage = 1;
+        this.currentPage.santri = 1;
         this.renderSantriTable();
+    }
+
+    searchPembayaran(query) {
+        this.currentPage.pembayaran = 1;
+        this.renderPembayaranTable();
     }
 
     filterSantri(status) {
-        this.currentPage = 1;
+        this.currentPage.santri = 1;
         this.renderSantriTable();
     }
 
-    renderPagination(totalItems) {
+    renderPagination(tableType, totalItems) {
         const totalPages = Math.ceil(totalItems / this.itemsPerPage);
-        const container = document.getElementById('santriPagination');
+        const currentPage = this.currentPage[tableType];
+        const container = document.getElementById(tableType === 'santri' ? 'santriPagination' : 'pembayaranPagination');
+        const infoContainer = document.getElementById(tableType === 'santri' ? 'santriPaginationInfo' : 'pembayaranPaginationInfo');
         
-        let paginationHTML = `
-            <div class="pagination-info">
-                Menampilkan ${Math.min((this.currentPage - 1) * this.itemsPerPage + 1, totalItems)}-${Math.min(this.currentPage * this.itemsPerPage, totalItems)} dari ${totalItems} santri
-            </div>
-            <div class="pagination-nav">
-        `;
+        if (!container) return;
 
-        if (this.currentPage > 1) {
-            paginationHTML += `<button class="pagination-btn" onclick="dashboard.prevPage()">← Prev</button>`;
+        let paginationHTML = '';
+        if (currentPage > 1) {
+            paginationHTML += `<button class="pagination-btn" data-page="${currentPage - 1}">← Prev</button>`;
         }
 
-        for (let i = 1; i <= totalPages; i++) {
-            const activeClass = i === this.currentPage ? 'active' : '';
-            paginationHTML += `<button class="pagination-btn ${activeClass}" onclick="dashboard.goToPage(${i})">${i}</button>`;
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+
+        for (let i = startPage; i <= endPage; i++) {
+            const activeClass = i === currentPage ? 'active' : '';
+            paginationHTML += `<button class="pagination-btn ${activeClass}" data-page="${i}">${i}</button>`;
         }
 
-        if (this.currentPage < totalPages) {
-            paginationHTML += `<button class="pagination-btn" onclick="dashboard.nextPage()">Next →</button>`;
+        if (currentPage < totalPages) {
+            paginationHTML += `<button class="pagination-btn" data-page="${currentPage + 1}">Next →</button>`;
         }
 
-        paginationHTML += '</div>';
         container.innerHTML = paginationHTML;
-    }
 
-    prevPage() { 
-        if (this.currentPage > 1) {
-            this.currentPage--;
-            this.renderSantriTable();
+        if (infoContainer) {
+            const startItem = (currentPage - 1) * this.itemsPerPage + 1;
+            const endItem = Math.min(currentPage * this.itemsPerPage, totalItems);
+            infoContainer.textContent = `Menampilkan ${startItem}-${endItem} dari ${totalItems} data`;
         }
-    }
-
-    nextPage() {
-        const totalPages = Math.ceil(this.getFilteredSantriData().length / this.itemsPerPage);
-        if (this.currentPage < totalPages) {
-            this.currentPage++;
-            this.renderSantriTable();
-        }
-    }
-
-    goToPage(page) {
-        this.currentPage = page;
-        this.renderSantriTable();
     }
 
     initCharts() {
-        // Simple canvas charts (no Chart.js dependency)
         this.drawPaymentChart();
+        this.drawRevenueChart();
+        this.drawDemographyChart();
     }
 
     drawPaymentChart() {
         const canvas = document.getElementById('paymentChart');
+        if (!canvas) return;
+        
         const ctx = canvas.getContext('2d');
-        canvas.width = 400;
-        canvas.height = 200;
-
-        // Simple bar chart simulation
-        const data = [120, 150, 180, 200, 220];
-        const max = Math.max(...data);
-        const barWidth = 50;
-        const padding = 40;
+        const data = [75, 90, 85, 95]; // Juli 2024, Jan 2025, Juli 2025, Jan 2026
+        const max = 100;
+        const barWidth = 60;
+        const padding = 50;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = var(--gray-100);
+        ctx.fillStyle = '#f8fafc';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         data.forEach((value, index) => {
@@ -278,27 +313,53 @@ class SyaJagadAdminDashboard {
             const x = padding + index * (barWidth + 20);
             const y = canvas.height - padding - barHeight;
 
-            // Bar
-            ctx.fillStyle = var(--gold);
+            // Bar gradient
+            const gradient = ctx.createLinearGradient(x, y, x, canvas.height);
+            gradient.addColorStop(0, '#22c55e');
+            gradient.addColorStop(1, '#16a34a');
+            
+            ctx.fillStyle = gradient;
             ctx.fillRect(x, y, barWidth, barHeight);
-            ctx.fillStyle = '#3D5300';
-            ctx.fillRect(x, y, barWidth, 4); // Top line
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(x, y, barWidth, 3);
 
             // Value label
-            ctx.fillStyle = var(--text-primary);
-            ctx.font = 'bold 12px Inter';
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 14px Inter';
             ctx.textAlign = 'center';
-            ctx.fillText(value, x + barWidth/2, y - 8);
+            ctx.fillText(value + '%', x + barWidth/2, y - 10);
+
+            // Label bulan
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(['Jul 24', 'Jan 25', 'Jul 25', 'Jan 26'][index], x + barWidth/2, canvas.height - 10);
         });
 
         // Axis
-        ctx.strokeStyle = var(--gray-300);
+        ctx.strokeStyle = '#e2e8f0';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(padding - 10, canvas.height - padding);
         ctx.lineTo(canvas.width - 10, canvas.height - padding);
         ctx.lineTo(canvas.width - 10, 20);
         ctx.stroke();
+    }
+
+    drawRevenueChart() {
+        // Simplified line chart
+        const canvas = document.getElementById('revenueChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        // Implementation similar to payment chart but for line graph
+    }
+
+    drawDemographyChart() {
+        // Simplified pie chart
+        const canvas = document.getElementById('demographyChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        // Implementation for donut/pie chart
     }
 
     updateDateTime() {
@@ -309,17 +370,7 @@ class SyaJagadAdminDashboard {
             month: 'long', 
             day: 'numeric' 
         });
-
         document.getElementById('currentDate').textContent = date;
-
-        const hour = now.getHours();
-        let greeting = '';
-        if (hour < 12) greeting = 'Selamat Pagi';
-        else if (hour < 15) greeting = 'Selamat Siang';
-        else if (hour < 18) greeting = 'Selamat Sore';
-        else greeting = 'Selamat Malam';
-        
-        document.getElementById('greetingTime').textContent = greeting;
     }
 
     formatRupiah(amount) {
@@ -329,145 +380,16 @@ class SyaJagadAdminDashboard {
             minimumFractionDigits: 0
         }).format(amount);
     }
-
-    updateBadges() {
-        // Simulate real-time updates
-        document.getElementById('notifBadge').textContent = Math.floor(Math.random() * 5) + 1;
-    }
-
-    showLogoutModal() {
-        document.getElementById('logoutModal').classList.add('active');
-    }
 }
 
-// Global functions for onclick handlers
-const dashboard = {
-    prevPage: () => window.dashboardInstance.prevPage(),
-    nextPage: () => window.dashboardInstance.nextPage(),
-    goToPage: (page) => window.dashboardInstance.goToPage(page)
-};
+// Global instance
+let dashboardInstance;
 
-// Initialize dashboard
 document.addEventListener('DOMContentLoaded', () => {
-    window.dashboardInstance = new SyaJagadAdminDashboard();
+    dashboardInstance = new SyaJagadAdminDashboard();
     
-    // Auto update every 30 seconds
+    // Auto updates
     setInterval(() => {
-        dashboardInstance.updateBadges();
         dashboardInstance.updateDateTime();
-    }, 30000);
-
-    // Update date every minute
-    setInterval(() => dashboardInstance.updateDateTime(), 60000);
+    }, 60000);
 });
-
-class DataSantriManager {
-    constructor(options = {}) {
-        this.santriData = options.initialData || [];
-        this.itemsPerPage = options.itemsPerPage || 8;
-        this.currentPage = 1;
-
-        this.tbody = document.getElementById('santriTableBody');
-        this.searchInput = document.getElementById('searchSantri');
-        this.paginationContainer = document.getElementById('santriPagination');
-
-        this.editSantriCallback = options.onEditSantri || function(id) {
-            alert(`Edit Santri dengan ID: ${id}`);
-        };
-
-        this.bindEvents();
-        this.renderTable();
-    }
-
-    bindEvents() {
-        if (this.searchInput) {
-            this.searchInput.addEventListener('input', () => {
-                this.currentPage = 1;
-                this.renderTable();
-            });
-        }
-
-        if (this.paginationContainer) {
-            this.paginationContainer.addEventListener('click', (e) => {
-                if (e.target.classList.contains('pagination-btn')) {
-                    const page = parseInt(e.target.dataset.page);
-                    if (!isNaN(page)) {
-                        this.currentPage = page;
-                        this.renderTable();
-                    }
-                } else if (e.target.closest('.edit-btn')) {
-                    const id = e.target.closest('.edit-btn').dataset.id;
-                    if (id) {
-                        this.editSantriCallback(parseInt(id));
-                    }
-                }
-            });
-        }
-    }
-
-    filterData(searchTerm) {
-        const term = searchTerm.trim().toLowerCase();
-        if (!term) return this.santriData;
-
-        return this.santriData.filter(santri => 
-            santri.nama.toLowerCase().includes(term) ||
-            santri.nis.includes(term) ||
-            String(santri.angkatan).includes(term)
-        );
-    }
-
-    renderTable() {
-        if (!this.tbody) return;
-
-        const filteredData = this.filterData(this.searchInput ? this.searchInput.value : '');
-        const totalItems = filteredData.length;
-        const totalPages = Math.ceil(totalItems / this.itemsPerPage);
-        if (this.currentPage > totalPages) this.currentPage = totalPages || 1;
-
-        const start = (this.currentPage - 1) * this.itemsPerPage;
-        const selectedData = filteredData.slice(start, start + this.itemsPerPage);
-
-        this.tbody.innerHTML = selectedData.map(s => `
-            <tr>
-                <td>${this.escapeHtml(s.nama)}</td>
-                <td>${this.escapeHtml(s.nis)}</td>
-                <td>${this.escapeHtml(s.kelamin)}</td>
-                <td>${s.angkatan}</td>
-                <td><span class="status ${s.status.toLowerCase()}">${this.escapeHtml(s.status)}</span></td>
-                <td>
-                    <button class="edit-btn" data-id="${s.id}" title="Edit Data" aria-label="Edit ${s.nama}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-
-        this.renderPagination(totalPages);
-    }
-
-    renderPagination(totalPages) {
-        if (!this.paginationContainer) return;
-
-        if (totalPages <= 1) {
-            this.paginationContainer.innerHTML = '';
-            return;
-        }
-
-        let html = '';
-        for (let i = 1; i <= totalPages; i++) {
-            html += `<button class="pagination-btn ${i === this.currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
-        }
-
-        this.paginationContainer.innerHTML = html;
-    }
-
-    escapeHtml(text) {
-        return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-}
-
