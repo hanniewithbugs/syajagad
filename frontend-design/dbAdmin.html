@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - SyaJagad</title>
+    <link rel="stylesheet" href="./css/dbAdmin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="logo-icon">
+                    <img src="./assets/images/logo.jpg" alt="SyaJagad" class="logo-img">
+                </div>
+                <span class="logo-text">SyaJagad</span>
+            </div>
+            <button class="sidebar-close" id="sidebarClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="sidebar-profile">
+            <div class="profile-avatar">
+                <div class="avatar-img">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="avatar-status online"></div>
+            </div>
+            <div class="profile-info">
+                <h4 id="sidebarName">Admin Utama</h4>
+                <span class="profile-role" id="sidebarRole">Super Admin</span>
+                <span class="profile-badge">
+                    <i class="fas fa-circle"></i>
+                    <span id="profileStatus">Online</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Menu Utama</div>
+            <ul class="nav-list">
+                <li class="nav-item active" data-page="dashboard">
+                    <a href="#" class="nav-link">
+                        <div class="nav-icon">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-page="santri">
+                    <a href="#" class="nav-link">
+                        <div class="nav-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <span>Data Santri</span>
+                        <div class="nav-badge" id="santriBadge">1,245</div>
+                    </a>
+                </li>
+                <li class="nav-item" data-page="pembayaran">
+                    <a href="#" class="nav-link">
+                        <div class="nav-icon">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <span>Pembayaran SPP</span>
+                        <div class="nav-badge" id="pembayaranBadge">23</div>
+                    </a>
+                </li>
+                <li class="nav-item" data-page="laporan">
+                    <a href="#" class="nav-link">
+                        <div class="nav-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <span>Laporan</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="nav-section-label">Pengaturan</div>
+            <ul class="nav-list">
+                <li class="nav-item" data-page="pengaturan">
+                    <a href="#" class="nav-link">
+                        <div class="nav-icon">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <span>Pengaturan</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link logout-link" id="logoutLink">
+                        <div class="nav-icon">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </div>
+                        <span>Keluar</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <div class="footer-info">
+                <i class="fas fa-shield-alt"></i>
+                <span>SSL Secured & AI Powered</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main-content" id="mainContent">
+
+        <!-- TOP NAVBAR -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="topbar-breadcrumb">
+                    <span class="breadcrumb-icon">
+                        <i class="fas fa-home"></i>
+                    </span>
+                    <span class="breadcrumb-sep">/</span>
+                    <span class="breadcrumb-current" id="breadcrumbCurrent">Dashboard</span>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-date">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span id="currentDate"></span>
+                </div>
+                <button class="topbar-notif" id="notifBtn">
+                    <i class="fas fa-bell"></i>
+                    <div class="notif-badge" id="notifBadge">3</div>
+                </button>
+                <div class="topbar-profile">
+                    <div class="tp-avatar">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="tp-info">
+                        <span class="tp-name" id="topbarName">Admin Utama</span>
+                        <span class="tp-role">Super Admin</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ===== PAGE: DASHBOARD ===== -->
+        <div class="page active" id="page-dashboard">
+            <div class="page-content">
+                <!-- Welcome Banner -->
+                <div class="welcome-banner">
+                    <div class="welcome-left">
+                        <div class="welcome-greeting">
+                            <span class="greeting-time" id="greetingTime">Selamat Pagi</span>
+                            <span class="greeting-emoji">👨‍💼</span>
+                        </div>
+                        <h2>Selamat Datang, Admin!</h2>
+                        <p>Sistem manajemen santri dan pembayaran SyaJagad berjalan optimal. Pantau performa dan kelola data secara real-time.</p>
+                    </div>
+                    <div class="welcome-right">
+                        <div class="welcome-illustration">
+                            <div class="wi-dashboard">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="wi-users">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="wi-coins">
+                                <div class="wi-coin c1">Rp</div>
+                                <div class="wi-coin c2">Rp</div>
+                                <div class="wi-coin c3">Rp</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="summary-grid">
+                    <div class="summary-card card-success">
+                        <div class="sc-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="sc-info">
+                            <span class="sc-label">Total Santri Aktif</span>
+                            <span class="sc-value" id="totalSantri">1,245</span>
+                            <span class="sc-sub">+12 dari bulan lalu</span>
+                        </div>
+                    </div>
+                    <div class="summary-card card-info">
+                        <div class="sc-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="sc-info">
+                            <span class="sc-label">Sudah Bayar</span>
+                            <span class="sc-value" id="totalPaid">Rp 2.8M</span>
+                            <span class="sc-sub">89% tingkat kolektabilitas</span>
+                        </div>
+                    </div>
+                    <div class="summary-card card-warning">
+                        <div class="sc-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="sc-info">
+                            <span class="sc-label">Belum Bayar</span>
+                            <span class="sc-value" id="totalUnpaid">23</span>
+                            <span class="sc-sub">SPP bulan ini</span>
+                        </div>
+                    </div>
+                    <div class="summary-card card-success">
+                        <div class="sc-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="sc-info">
+                            <span class="sc-label">Pemasukan Semester</span>
+                            <span class="sc-value" id="totalPemasukan">Rp 45.2M</span>
+                            <span class="sc-sub">Target 75%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Grid -->
+                <div class="content-grid">
+                    <!-- Pembayaran Terbaru -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3>
+                                <i class="fas fa-receipt"></i>
+                                Pembayaran Terbaru
+                            </h3>
+                            <a href="#" class="card-link" id="lihatSemuaPembayaran">Lihat Semua</a>
+                        </div>
+                        <div class="card-body" id="pembayaranTerbaruList">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+
+                    <!-- Statistik Bulanan -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3>
+                                <i class="fas fa-chart-line"></i>
+                                Tren Pembayaran
+                            </h3>
+                            <span class="card-badge success">+15% MoM</span>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="paymentChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tagihan Summary -->
+                <div class="content-card full-width">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fas fa-file-invoice"></i>
+                            Ringkasan Tagihan
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="tagihan-summary">
+                            <div class="ts-item">
+                                <span class="ts-label">Total Tagihan</span>
+                                <span class="ts-value" id="totalTagihan">Rp 50.000.000</span>
+                            </div>
+                            <div class="ts-item">
+                                <span class="ts-label">Sudah Dibayar</span>
+                                <span class="ts-value success" id="totalBayar">Rp 45.200.000</span>
+                            </div>
+                            <div class="ts-item">
+                                <span class="ts-label">Sisa Tagihan</span>
+                                <span class="ts-value warning" id="sisaTagihan">Rp 4.800.000</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PAGE: DATA SANTRI ===== -->
+        <div class="page" id="page-santri">
+            <div class="page-content">
+                <div class="page-header">
+                    <h2>
+                        <i class="fas fa-users"></i>
+                        Data Santri
+                    </h2>
+                    <p>Kelola database santri aktif, cuti, dan alumni</p>
+                </div>
+
+                <div class="admin-actions">
+                    <button class="btn-primary" id="tambahSantriBtn">
+                        <i class="fas fa-plus"></i> Tambah Santri
+                    </button>
+                    <div class="search-filter">
+                        <div class="filter-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Cari nama, NIS, atau angkatan..." id="searchSantri">
+                        </div>
+                        <select id="filterStatus">
+                            <option value="">Semua Status</option>
+                            <option value="aktif">Aktif</option>
+                            <option value="cuti">Cuti</option>
+                            <option value="alumni">Alumni</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="santriTable">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAll"></th>
+                                <th>Nama</th>
+                                <th>NIS</th>
+                                <th>Jenis Kelamin</th>
+                                <th>Angkatan</th>
+                                <th>Status</th>
+                                <th>Terakhir Bayar</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="santriTableBody">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                    <div class="table-pagination" id="santriPagination">
+                        <!-- Dynamic pagination -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PAGE: PEMBAYARAN SPP ===== -->
+        <div class="page" id="page-pembayaran">
+            <div class="page-content">
+                <div class="page-header">
+                    <h2>
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        Pembayaran SPP
+                    </h2>
+                    <p>Kelola pembayaran santri dan konfigurasi sistem</p>
+                </div>
+
+                <div class="admin-section-grid">
+                    <!-- Profil Instansi -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-building"></i> Profil Instansi</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="profile-field">
+                                <label>Nama Institusi</label>
+                                <div class="profile-value">Pondok Pesantren SyaJagad</div>
+                            </div>
+                            <div class="profile-field">
+                                <label>Alamat</label>
+                                <div class="profile-value">Jl. Pesantren Al-Hikmah No. 123, Jakarta</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pengaturan Pembayaran -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-cog"></i> Jenis Pembayaran</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="payment-config-list">
+                                <div class="payment-config-item">
+                                    <div class="pci-info">
+                                        <span class="pci-name">SPP Bulanan</span>
+                                        <span class="pci-amount">Rp 250.000</span>
+                                    </div>
+                                    <button class="btn-edit"><i class="fas fa-edit"></i></button>
+                                </div>
+                                <!-- More items -->
+                            </div>
+                            <div class="config-actions">
+                                <button class="btn-primary">+ Tambah Jenis Pembayaran</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Metode Pembayaran -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-credit-card"></i> Metode Pembayaran</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="toggle-group">
+                                <label class="toggle-item">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-label">Bank Mandiri</span>
+                                </label>
+                                <label class="toggle-item">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-label">Bank BCA</span>
+                                </label>
+                                <label class="toggle-item">
+                                    <input type="checkbox">
+                                    <span class="toggle-label">QRIS</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Periode & Statistik -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-calendar-alt"></i> Periode & Statistik</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="period-controls">
+                                <label>Tanggal Mulai: <input type="date" value="2024-09-01"></label>
+                                <label>Tanggal Akhir: <input type="date" value="2024-12-31"></label>
+                            </div>
+                            <div class="payment-stats">
+                                <span class="stat-item">Menunggak: <strong>23</strong></span>
+                                <span class="stat-item success">Lunas: <strong>1,222</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PAGE: LAPORAN ===== -->
+        <div class="page" id="page-laporan">
+            <div class="page-content">
+                <div class="page-header">
+                    <h2>
+                        <i class="fas fa-chart-bar"></i>
+                        Laporan Keuangan
+                    </h2>
+                    <p>Analisis mendalam dan ekspor data laporan</p>
+                </div>
+
+                <div class="report-filters">
+                    <div class="filter-group">
+                        <select id="filterAngkatan">
+                            <option>Semua Angkatan</option>
+                            <option>2024</option>
+                            <option>2023</option>
+                        </select>
+                        <select id="filterMetode">
+                            <option>Semua Metode</option>
+                            <option>QRIS</option>
+                            <option>BCA</option>
+                        </select>
+                    </div>
+                    <div class="export-buttons">
+                        <button class="btn-export" data-format="pdf"><i class="fas fa-file-pdf"></i> PDF</button>
+                        <button class="btn-export" data-format="excel"><i class="fas fa-file-excel"></i> Excel</button>
+                        <button class="btn-export" data-format="csv"><i class="fas fa-file-csv"></i> CSV</button>
+                    </div>
+                </div>
+
+                <div class="report-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3>Revenue Growth</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="revenueChart" width="400" height="250"></canvas>
+                        </div>
+                    </div>
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3>Demografi Pembayar</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="demografiChart" width="300" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-summary">
+                    <div class="summary-item">
+                        <span class="label">Pendapatan Terverifikasi</span>
+                        <span class="value" id="pendapatanVerifikasi">Rp 42.5M</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Total Tunggakan</span>
+                        <span class="value warning" id="totalTunggakan">Rp 4.8M</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Tingkat Kolektabilitas</span>
+                        <span class="value success" id="kolektabilitas">89.2%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PAGE: PENGATURAN ===== -->
+        <div class="page" id="page-pengaturan">
+            <div class="page-content">
+                <div class="page-header">
+                    <h2>
+                        <i class="fas fa-cog"></i>
+                        Pengaturan Sistem
+                    </h2>
+                    <p>Keamanan dan konfigurasi sistem admin</p>
+                </div>
+
+                <div class="settings-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-lock"></i> Keamanan Akun</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="profile-field">
+                                <label>Password Saat Ini</label>
+                                <div class="profile-value password-field">
+                                    <span>************</span>
+                                    <button class="show-password">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="profile-actions">
+                                <button class="btn-primary" id="gantiPasswordBtn">Ganti Password</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-users-cog"></i> Admin Tambahan</h3>
+                        </div>
+                        <div class="card-body">
+                            <p>Belum ada admin tambahan</p>
+                            <button class="btn-primary">+ Tambah Admin</button>
+                        </div>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-shield-check"></i> 2FA</h3>
+                        </div>
+                        <div class="card-body">
+                            <label class="toggle-item">
+                                <input type="checkbox">
+                                <span class="toggle-label">Aktifkan Autentikasi 2 Faktor</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ===== MODALS ===== -->
+    <div class="modal-overlay" id="logoutModal">
+        <div class="modal-box logout-modal">
+            <div class="modal-header">
+                <i class="fas fa-sign-out-alt"></i>
+                <h3>Konfirmasi Keluar</h3>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin keluar dari Dashboard Admin?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-cancel" id="logoutCancel">Batal</button>
+                <button class="modal-pay danger" id="confirmLogout">Keluar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./js/dbAdmin.js"></script>
+</body>
+</html>
