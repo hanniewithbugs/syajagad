@@ -34,7 +34,7 @@
                 <p>Silahkan login dengan akun santri atau admin</p>
             </div>
 
-            <form method="POST" action="{{ route('login') }}" class="login-form">
+            <form id="loginForm" method="POST" action="{{ route('login') }}" class="login-form">
                 @csrf
                 @if(session('error'))
                     <div class="alert-error" style="margin-bottom:12px;color:#b91c1c;background:#fee2e2;padding:10px 12px;border-radius:8px;">

@@ -281,57 +281,50 @@ function isValidEmail(email) {
 function initFormSubmit() {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
-    
+
     if (loginForm) {
         loginForm.addEventListener('submit', handleLoginSubmit);
     }
-    
+
     if (registerForm) {
         registerForm.addEventListener('submit', handleRegisterSubmit);
     }
 }
 
 function handleLoginSubmit(e) {
-    e.preventDefault();
     const form = e.target;
     const btn = form.querySelector('.auth-btn');
-    const username = document.getElementById('loginUsername').value;
-    const password = document.getElementById('loginPassword').value;
-    
-    if (!validateLogin(username, password)) return;
-    
+    const emailInput = form.querySelector('input[name="email"]');
+    const passwordInput = document.getElementById('loginPassword');
+    const roleInput = document.getElementById('loginRole');
+
+    const email = emailInput ? emailInput.value.trim() : '';
+    const password = passwordInput ? passwordInput.value : '';
+    const role = roleInput ? roleInput.value : '';
+
+    if (!validateLogin(email, password, role)) {
+        e.preventDefault();
+        return;
+    }
+
     showLoading(btn);
-    
-    // Simulate API call
-    setTimeout(() => {
-        hideLoading(btn);
-        showSuccess('Login berhasil! Redirecting...');
-        // window.location.href = '/dashboard';
-    }, 2000);
 }
 
 function handleRegisterSubmit(e) {
-    e.preventDefault();
     const form = e.target;
     const btn = form.querySelector('.auth-btn');
-    
-    if (!validateRegisterForm()) return;
-    
+
+    if (!validateRegisterForm()) {
+        e.preventDefault();
+        return;
+    }
+
     showLoading(btn);
-    
-    // Simulate API call
-    setTimeout(() => {
-        hideLoading(btn);
-        showSuccess('Akun berhasil dibuat! Silahkan login.');
-        setTimeout(() => {
-            window.location.href = '{{ route("login") }}';
-        }, 1500);
-    }, 2500);
 }
 
-function validateLogin(username, password) {
-    if (!username || !password) {
-        showError('Mohon lengkapi semua field');
+function validateLogin(email, password, role) {
+    if (!email || !password || !role) {
+        showError('Mohon lengkapi email, password, dan peran');
         return false;
     }
     return true;
@@ -550,20 +543,27 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Auto-focus role selector saat username diisi
-document.getElementById('loginUsername').addEventListener('blur', function() {
-    if (!document.getElementById('loginRole').value) {
-        document.getElementById('loginRole').focus();
-    }
-});
+// Auto-focus role selector saat email diisi (hanya jika elemen ada)
+const loginEmailField = document.querySelector('#loginForm input[name="email"]');
+const loginRoleField = document.getElementById('loginRole');
+if (loginEmailField && loginRoleField) {
+    loginEmailField.addEventListener('blur', function() {
+        if (!loginRoleField.value) {
+            loginRoleField.focus();
+        }
+    });
+}
 
-// Validasi role sebelum submit
-document.getElementById('loginForm').addEventListener('submit', function(e) {
-    const role = document.getElementById('loginRole').value;
-    if (!role) {
-        e.preventDefault();
-        alert('Silakan pilih peran (Santri/Admin)');
-        document.getElementById('loginRole').focus();
-        return false;
-    }
-});
+// Validasi role sebelum submit (hanya jika form login ada)
+const loginFormElement = document.getElementById('loginForm');
+if (loginFormElement && loginRoleField) {
+    loginFormElement.addEventListener('submit', function(e) {
+        const role = loginRoleField.value;
+        if (!role) {
+            e.preventDefault();
+            alert('Silakan pilih peran (Santri/Admin)');
+            loginRoleField.focus();
+            return false;
+        }
+    });
+}
