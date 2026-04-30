@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - SyaJagad</title>
-    <link rel="stylesheet" href="{{ asset('css/dbAdmin.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/dbSantri.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -638,6 +638,36 @@
         </div>
     </div>
 
+    <form id="logoutForm" method="POST" action="{{ route('logout') }}" style="display: none;">
+        @csrf
+    </form>
+
     <script src="{{ asset('js/dbAdmin.js') }}"></script>
+    <script>
+        const logoutLink = document.getElementById('logoutLink');
+        const logoutModal = document.getElementById('logoutModal');
+        const logoutCancel = document.getElementById('logoutCancel');
+        const confirmLogout = document.getElementById('confirmLogout');
+        const logoutForm = document.getElementById('logoutForm');
+
+        logoutLink?.addEventListener('click', (event) => {
+            event.preventDefault();
+            logoutModal?.classList.add('active');
+        });
+
+        logoutCancel?.addEventListener('click', () => {
+            logoutModal?.classList.remove('active');
+        });
+
+        logoutModal?.addEventListener('click', (event) => {
+            if (event.target === logoutModal) {
+                logoutModal.classList.remove('active');
+            }
+        });
+
+        confirmLogout?.addEventListener('click', () => {
+            logoutForm?.submit();
+        });
+    </script>
 </body>
 </html>

@@ -20,13 +20,15 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validated = $request->validate([
-            'email' => ['required', 'email'],
+            'email' => ['required', 'string', 'max:255'],
             'password' => ['required'],
             'role' => ['required', Rule::in(['admin', 'santri'])],
         ]);
 
+        $loginField = filter_var($validated['email'], FILTER_VALIDATE_EMAIL) ? 'email' : 'nis';
+
         $credentials = [
-            'email' => $validated['email'],
+            $loginField => $validated['email'],
             'password' => $validated['password'],
             'role' => $validated['role'],
         ];
