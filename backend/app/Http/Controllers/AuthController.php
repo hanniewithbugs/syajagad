@@ -5,11 +5,19 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
+    public function redirectToDashboard()
+    {
+        return Auth::user()?->role === 'admin'
+            ? redirect()->route('dbAdmin')
+            : redirect()->route('dbSantri');
+    }
+
     // tampil login
     public function showLogin()
     {
@@ -25,15 +33,23 @@ class AuthController extends Controller
             'role' => ['required', Rule::in(['admin', 'santri'])],
         ]);
 
-        $loginField = filter_var($validated['email'], FILTER_VALIDATE_EMAIL) ? 'email' : 'nis';
+        $login = trim($validated['email']);
+        $user = User::where('role', $validated['role'])
+            ->where(function ($query) use ($login) {
+                if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
+                    $query->where('email', $login);
+                    return;
+                }
 
-        $credentials = [
-            $loginField => $validated['email'],
-            'password' => $validated['password'],
-            'role' => $validated['role'],
-        ];
+                $nisCompact = preg_replace('/\D+/', '', $login);
+                $query->where('username', $login)
+                    ->orWhere('nis', $login)
+                    ->orWhereRaw("REPLACE(nis, ' ', '') = ?", [$nisCompact]);
+            })
+            ->first();
 
-        if (Auth::attempt($credentials)) {
+        if ($user && Hash::check($validated['password'], $user->password)) {
+            Auth::login($user);
             $request->session()->regenerate();
 
             return Auth::user()->role === 'admin'
@@ -43,7 +59,7 @@ class AuthController extends Controller
 
         return back()
             ->withInput($request->only('email', 'role'))
-            ->with('error', 'Email, password, atau peran tidak sesuai');
+            ->with('error', 'Email, username, NIS/NIP, password, atau peran tidak sesuai');
     }
 
     // tampil register
@@ -60,7 +76,7 @@ class AuthController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'tgl_lahir' => ['required', 'date'],
             'alamat' => ['required', 'string', 'max:255'],
-            'role' => ['required', Rule::in(['admin', 'santri'])],
+            'role' => ['nullable', Rule::in(['santri'])],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'username' => ['required', 'string', 'max:50', 'unique:users,username'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
@@ -71,7 +87,7 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'tgl_lahir' => $validated['tgl_lahir'],
             'alamat' => $validated['alamat'],
-            'role' => $validated['role'],
+            'role' => 'santri',
             'email' => $validated['email'],
             'username' => $validated['username'],
             'password' => Hash::make($validated['password']),
@@ -79,9 +95,7 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        return $user->role === 'admin'
-            ? redirect()->route('dbAdmin')
-            : redirect()->route('dbSantri');
+        return redirect()->route('dbSantri');
     }
 
     public function showAdminDashboard()
@@ -99,7 +113,72 @@ class AuthController extends Controller
             abort(403, 'Akses ditolak untuk role ini.');
         }
 
-        return view('dbSantri');
+        $paymentData = PaymentController::buildPaymentData(Auth::user());
+
+        return view('dbSantri', [
+            'paymentData' => $paymentData,
+        ]);
+    }
+
+    public function updateSantriProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($user?->role !== 'santri') {
+            abort(403, 'Akses ditolak untuk role ini.');
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'username' => ['required', 'string', 'max:50', Rule::unique('users', 'username')->ignore($user->id)],
+            'alamat' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $user->update($validated);
+
+        return response()->json([
+            'message' => 'Profil berhasil diperbarui.',
+            'user' => [
+                'name' => $user->name,
+                'nis' => $user->nis,
+                'email' => $user->email,
+                'username' => $user->username,
+                'alamat' => $user->alamat,
+                'tgl_lahir' => optional($user->tgl_lahir)->format('Y-m-d'),
+            ],
+        ]);
+    }
+
+    public function changeSantriPassword(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($user?->role !== 'santri') {
+            abort(403, 'Akses ditolak untuk role ini.');
+        }
+
+        $validated = $request->validate([
+            'old_password' => ['required', 'string'],
+            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        if (! Hash::check($validated['old_password'], $user->password)) {
+            return response()->json([
+                'message' => 'Kata sandi lama tidak sesuai.',
+                'errors' => [
+                    'old_password' => ['Kata sandi lama tidak sesuai.'],
+                ],
+            ], 422);
+        }
+
+        $user->update([
+            'password' => Hash::make($validated['new_password']),
+        ]);
+
+        return response()->json([
+            'message' => 'Password berhasil diganti.',
+        ]);
     }
 
     public function logout(Request $request)

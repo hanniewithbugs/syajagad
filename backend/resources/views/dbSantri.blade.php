@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Dashboard Santri - SyaJagad</title>
     <link rel="stylesheet" href="{{ asset('css/dbSantri.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -33,8 +34,8 @@
                 <div class="avatar-status online"></div>
             </div>
             <div class="profile-info">
-                <h4 id="sidebarName">Ahmad Santoso</h4>
-                <span class="profile-nis" id="sidebarNIS">NIS: 2024001</span>
+                <h4 id="sidebarName">{{ Auth::user()->name }}</h4>
+                <span class="profile-nis" id="sidebarNIS">NIS: {{ Auth::user()->nis }}</span>
                 <span class="profile-badge">
                     <i class="fas fa-circle"></i>
                     <span id="profileStatus">Santri Aktif</span>
@@ -91,7 +92,7 @@
         <div class="sidebar-footer">
             <div class="footer-info">
                 <i class="fas fa-shield-alt"></i>
-                <span>SSL Secured & AI Powered</span>
+                <span>SSL Secured</span>
             </div>
         </div>
     </aside>
@@ -146,10 +147,10 @@
                     <div class="welcome-left">
                         <div class="welcome-greeting">
                             <span class="greeting-time" id="greetingTime">Selamat Pagi</span>
-                            <span class="greeting-emoji">☀️</span>
+                            <span class="greeting-emoji">Selamat datang</span>
                         </div>
                         <h2 id="welcomeName">Ahmad Santoso</h2>
-                        <p id="welcomeMessage">AI SyaJagad memantau tagihan dan memberikan prediksi keterlambatan pembayaran.</p>
+                        <p id="welcomeMessage">Pantau tagihan SPP semester, status pembayaran, dan denda keterlambatan secara ringkas.</p>
                         <a href="#" class="welcome-btn" id="bayarSekarangBtn">
                             <i class="fas fa-credit-card"></i>
                             Bayar Tagihan
@@ -193,7 +194,7 @@
                         <div class="sc-info">
                             <span class="sc-label">Total Denda</span>
                             <span class="sc-value" id="totalDenda">Rp 100.000</span>
-                            <span class="sc-sub">2 bulan terlambat</span>
+                            <span class="sc-sub" id="totalDendaSub">Denda berjalan per bulan</span>
                         </div>
                     </div>
 
@@ -211,6 +212,36 @@
 
                 <!-- Content Grid -->
                 <div class="content-grid">
+                    <!-- AI Payment Insight -->
+                    <div class="content-card ai-payment-card">
+                        <div class="card-header">
+                            <h3>
+                                <i class="fas fa-brain"></i>
+                                Ringkasan Risiko Tagihan
+                            </h3>
+                            <span class="card-badge" id="aiSourceBadge">Lokal</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="ai-risk-meter">
+                                <div class="ai-risk-top">
+                                    <div>
+                                        <span class="ai-risk-label" id="aiRiskLabel">Memuat...</span>
+                                        <strong id="aiRiskValue">0%</strong>
+                                    </div>
+                                    <span id="aiUpdated">-</span>
+                                </div>
+                                <div class="risk-track">
+                                    <div class="risk-fill" id="riskFill"></div>
+                                </div>
+                            </div>
+                            <p class="ai-advice" id="aiAdviceText">Sedang menyiapkan ringkasan tagihan.</p>
+                            <div class="ai-next-action">
+                                <i class="fas fa-bolt"></i>
+                                <span id="aiNextAction">Menyiapkan rekomendasi</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Tagihan Aktif -->
                     <div class="content-card">
                         <div class="card-header">
@@ -252,7 +283,7 @@
                         <i class="fas fa-file-invoice-dollar"></i>
                         Tagihan SPP
                     </h2>
-                    <p>Kelola tagihan dan bayar sesuai prediksi AI</p>
+                    <p>Kelola tagihan SPP per semester dan status pembayarannya</p>
                 </div>
 
                 <!-- Filter Bar -->
@@ -331,7 +362,7 @@
                                 <label>Password</label>
                                 <div class="profile-value password-field">
                                     <span>************</span>
-                                    <button class="show-password" id="showPassword">
+                                    <button class="show-password" id="showPassword" type="button" title="Informasi password">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                 </div>
@@ -370,8 +401,23 @@
             <div class="modal-body">
                 <div class="modal-tagihan-info">
                     <span class="mti-label">Tagihan</span>
-                    <span class="mti-name" id="modalTagihanName">SPP November 2024</span>
-                    <span class="mti-amount" id="modalTagihanAmount">Rp 250.000</span>
+                    <span class="mti-name" id="modalTagihanName">SPP Semester Ganjil 2026</span>
+                    <span class="mti-amount" id="modalTagihanAmount">Rp 0</span>
+                </div>
+
+                <div class="payment-summary">
+                    <div class="summary-row">
+                        <span>Tagihan SPP Semester</span>
+                        <span id="modalTagihanBase">Rp 0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Denda</span>
+                        <span id="modalTagihanPenalty">Rp 0</span>
+                    </div>
+                    <div class="summary-row total-row">
+                        <strong>Total Bayar</strong>
+                        <strong id="modalTagihanTotal">Rp 0</strong>
+                    </div>
                 </div>
 
                 <div class="payment-methods">
@@ -403,6 +449,21 @@
                             <span class="pm-name">Mandiri Virtual Account</span>
                             <span class="pm-desc">Transfer via ATM atau Livin' Mandiri</span>
                         </div>
+                    </div>
+                </div>
+
+                <div class="payment-method-details" id="paymentMethodDetails">
+                    <div class="payment-detail qris active" id="paymentHelpQris">
+                        <p>Untuk pembayaran QRIS, klik "Lanjut ke Midtrans". Midtrans akan menampilkan QR dinamis yang bisa dipindai dari e-wallet atau mobile banking yang mendukung QRIS.</p>
+                        <div class="qris-placeholder">
+                            <span>Gambar QRIS akan tersedia di popup Midtrans.</span>
+                        </div>
+                    </div>
+                    <div class="payment-detail va" id="paymentHelpVA" style="display: none;">
+                        <p>Untuk pembayaran Virtual Account, Midtrans akan membuat nomor VA khusus di popup pembayaran.</p>
+                        <p><strong>Bank:</strong> <span id="vaBankName">BCA / Mandiri</span></p>
+                        <p><strong>Nomor VA:</strong> akan muncul setelah transaksi dibuat oleh Midtrans.</p>
+                        <p>Ikuti instruksi pembayaran dari Midtrans dan transfer sesuai nominal tagihan.</p>
                     </div>
                 </div>
             </div>
@@ -447,7 +508,7 @@
                 </div>
             </div>
             <h3>Pembayaran Berhasil!</h3>
-            <p id="successMessage">Tagihan SPP November 2024 telah berhasil dibayar.</p>
+            <p id="successMessage">Tagihan SPP Semester Ganjil 2026 telah berhasil dibayar.</p>
             <div class="success-detail">
                 <div class="sd-item">
                     <span>No. Transaksi</span>
@@ -463,7 +524,7 @@
                 </div>
                 <div class="sd-item">
                     <span>Status</span>
-                    <span class="sd-status">✅ Lunas</span>
+                    <span class="sd-status">Lunas</span>
                 </div>
             </div>
             <button class="modal-pay" id="successClose">
@@ -473,6 +534,149 @@
         </div>
     </div>
 
+    <!-- ===== EDIT PROFILE MODAL ===== -->
+    <div class="modal-overlay" id="editProfileModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-user-edit"></i>
+                    Edit Profil
+                </h3>
+                <button class="modal-close" type="button">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editProfileForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editProfileName">Nama Lengkap</label>
+                        <input type="text" id="editProfileName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProfileEmail">Email</label>
+                        <input type="email" id="editProfileEmail" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProfileUsername">Username</label>
+                        <input type="text" id="editProfileUsername" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProfileAlamat">Alamat</label>
+                        <textarea id="editProfileAlamat" name="alamat" rows="3"></textarea>
+                    </div>
+                    <p class="form-feedback" id="editProfileFeedback"></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="modal-cancel" type="button">Batal</button>
+                    <button class="modal-pay" type="submit">
+                        <i class="fas fa-save"></i>
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== CHANGE PASSWORD MODAL ===== -->
+    <div class="modal-overlay" id="changePasswordModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-lock"></i>
+                    Ganti Password
+                </h3>
+                <button class="modal-close" type="button">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="changePasswordForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="oldPassword">Password Lama</label>
+                        <input type="password" id="oldPassword" name="old_password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Password Baru</label>
+                        <input type="password" id="newPassword" name="new_password" minlength="8" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPasswordConfirmation">Konfirmasi Password Baru</label>
+                        <input type="password" id="newPasswordConfirmation" name="new_password_confirmation" minlength="8" required>
+                    </div>
+                    <p class="form-feedback" id="changePasswordFeedback"></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="modal-cancel" type="button">Batal</button>
+                    <button class="modal-pay" type="submit">
+                        <i class="fas fa-key"></i>
+                        Ubah Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== QUICK CHATBOT ===== -->
+    <div class="chatbot-shell" id="chatbotShell">
+        <div class="chatbot-panel" id="chatbotPanel" aria-live="polite">
+            <div class="chatbot-header">
+                <div>
+                    <span class="chatbot-eyebrow">Asisten SyaJagad</span>
+                    <strong>Butuh cek tagihan?</strong>
+                </div>
+                <div class="chatbot-header-actions">
+                    <button class="chatbot-clear" id="chatbotClear" type="button" aria-label="Hapus riwayat chat">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="chatbot-close" id="chatbotClose" type="button" aria-label="Tutup asisten">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chatbot-body" id="chatbotMessages">
+                <div class="chatbot-message bot">
+                    <span>Saya bisa bantu cek tagihan, denda, status pembayaran, dan cara bayar. Pilih salah satu menu cepat di bawah.</span>
+                    <small class="chatbot-time">Baru saja</small>
+                </div>
+            </div>
+            <div class="chatbot-options" id="chatbotOptions">
+                <button type="button" data-intent="total_tagihan">Total tagihan</button>
+                <button type="button" data-intent="tagihan_aktif">Belum lunas</button>
+                <button type="button" data-intent="denda">Denda</button>
+                <button type="button" data-intent="cara_bayar_qris">Bayar QRIS</button>
+                <button type="button" data-intent="cara_bayar_va">Bayar VA</button>
+                <button type="button" data-intent="status_terakhir">Status terakhir</button>
+                <button type="button" data-intent="rekomendasi">Rekomendasi</button>
+                <button type="button" data-intent="kontak_admin">Kontak admin</button>
+            </div>
+        </div>
+        <button class="chatbot-toggle" id="chatbotToggle" type="button" aria-label="Buka Asisten SyaJagad">
+            <i class="fas fa-comments"></i>
+            <span>Asisten</span>
+        </button>
+    </div>
+
+    <form id="logoutForm" method="POST" action="{{ route('logout') }}" style="display: none;">
+        @csrf
+    </form>
+
+    <script>
+        // Pass data user dari Laravel ke JavaScript
+        window.userData = {
+            name: "{{ Auth::user()->name }}",
+            nis: "{{ Auth::user()->nis }}",
+            email: "{{ Auth::user()->email }}",
+            username: "{{ Auth::user()->username }}",
+            tgl_lahir: "{{ Auth::user()->tgl_lahir }}",
+            alamat: "{{ Auth::user()->alamat }}",
+            role: "{{ Auth::user()->role }}"
+        };
+        window.paymentData = @json($paymentData ?? []);
+    </script>
+    <script
+        src="{{ config('services.midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
+        data-client-key="{{ config('services.midtrans.client_key') }}">
+    </script>
     <script src="{{ asset('js/dbSantri.js') }}"></script>
 </body>
 </html>

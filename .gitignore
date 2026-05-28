@@ -32,7 +32,9 @@ next-env.d.ts
 /vendor/
 /node_modules/
 /.env
+backend/.env
 /.env.backup
 /.phpunit.result.cache
 /bootstrap/cache/*.php
 /storage/*.key
+backend/database/*.sqlite

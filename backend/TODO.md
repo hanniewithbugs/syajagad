@@ -21,9 +21,9 @@
 
 - [ ] Testing (maksimal):
   - [ ] Run migration
-  - [ ] Test register admin
-  - [ ] Test register santri
-  - [ ] Test login admin -> `/dbAdmin`
-  - [ ] Test login santri -> `/dbSantri`
-  - [ ] Test access protection (wrong role cannot access other dashboard)
-  - [ ] Test existing pages (`/`, `/login`, `/register`) still work
+  - [x] Test register admin
+  - [x] Test register santri
+  - [x] Test login admin -> `/dbAdmin`
+  - [x] Test login santri -> `/dbSantri`
+  - [x] Test access protection (wrong role cannot access other dashboard)
+  - [x] Test existing pages (`/`, `/login`, `/register`) still work

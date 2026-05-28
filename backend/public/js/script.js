@@ -15,6 +15,8 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 // Navbar scroll effect
 window.addEventListener('scroll', () => {
     const navbar = document.querySelector('.navbar');
+    if (!navbar) return;
+
     if (window.scrollY > 50) {
         navbar.style.background = 'rgba(13, 15, 37, 0.95)';
         navbar.style.backdropFilter = 'blur(25px)';
@@ -98,6 +100,8 @@ function enhanceCoinAnimations() {
 // Mouse parallax effect for hero section
 document.addEventListener('mousemove', (e) => {
     const hero = document.querySelector('.hero');
+    if (!hero) return;
+
     const rect = hero.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -144,24 +148,32 @@ window.addEventListener('load', () => {
     
     // Staggered entrance animation
     setTimeout(() => {
-        document.querySelector('.hero-title').style.opacity = '1';
-        document.querySelector('.hero-title').style.transform = 'translateY(0)';
+        const heroTitle = document.querySelector('.hero-title');
+        if (!heroTitle) return;
+        heroTitle.style.opacity = '1';
+        heroTitle.style.transform = 'translateY(0)';
     }, 300);
     
     setTimeout(() => {
-        document.querySelector('.hero-subtitle').style.opacity = '1';
-        document.querySelector('.hero-subtitle').style.transform = 'translateY(0)';
+        const heroSubtitle = document.querySelector('.hero-subtitle');
+        if (!heroSubtitle) return;
+        heroSubtitle.style.opacity = '1';
+        heroSubtitle.style.transform = 'translateY(0)';
     }, 600);
     
     setTimeout(() => {
-        document.querySelector('.hero-buttons').style.opacity = '1';
-        document.querySelector('.hero-buttons').style.transform = 'translateY(0)';
+        const heroButtons = document.querySelector('.hero-buttons');
+        if (!heroButtons) return;
+        heroButtons.style.opacity = '1';
+        heroButtons.style.transform = 'translateY(0)';
     }, 900);
 });
 
 // Mobile menu toggle (for future responsive menu)
 function toggleMobileMenu() {
     const navMenu = document.querySelector('.nav-menu');
+    if (!navMenu) return;
+
     navMenu.classList.toggle('active');
 }
 
@@ -170,9 +182,12 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('PayNova Landing Page Loaded Successfully! 🚀');
     
     // Add click sound effect (optional)
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    const audioContext = AudioContextClass ? new AudioContextClass() : null;
     
     function playClickSound() {
+        if (!audioContext) return;
+
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
         
@@ -241,7 +256,11 @@ function initFormValidation() {
 }
 
 function validateField(input) {
+    if (!input) return false;
+
     const wrapper = input.closest('.input-wrapper');
+    if (!wrapper) return true;
+
     const value = input.value.trim();
     
     wrapper.classList.remove('success', 'error');
@@ -257,7 +276,7 @@ function validateField(input) {
     }
     
     if (input.id === 'confirmPassword') {
-        const password = document.getElementById('password').value;
+        const password = document.getElementById('password')?.value || '';
         if (value !== password) {
             wrapper.classList.add('error');
             return false;
@@ -307,7 +326,7 @@ function handleLoginSubmit(e) {
         return;
     }
 
-    showLoading(btn);
+    if (btn) showLoading(btn);
 }
 
 function handleRegisterSubmit(e) {
@@ -319,7 +338,7 @@ function handleRegisterSubmit(e) {
         return;
     }
 
-    showLoading(btn);
+    if (btn) showLoading(btn);
 }
 
 function validateLogin(email, password, role) {
@@ -346,15 +365,23 @@ function validateRegisterForm() {
 
 // Loading States
 function showLoading(btn) {
+    if (!btn) return;
+
     btn.disabled = true;
-    btn.querySelector('.btn-text').style.opacity = '0';
-    btn.querySelector('.btn-loader').style.display = 'inline-flex';
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoader = btn.querySelector('.btn-loader');
+    if (btnText) btnText.style.opacity = '0';
+    if (btnLoader) btnLoader.style.display = 'inline-flex';
 }
 
 function hideLoading(btn) {
+    if (!btn) return;
+
     btn.disabled = false;
-    btn.querySelector('.btn-text').style.opacity = '1';
-    btn.querySelector('.btn-loader').style.display = 'none';
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoader = btn.querySelector('.btn-loader');
+    if (btnText) btnText.style.opacity = '1';
+    if (btnLoader) btnLoader.style.display = 'none';
 }
 
 // Notifications
@@ -429,6 +456,8 @@ function showForgotPasswordModal() {
 function initAnimations() {
     // Entrance animation
     const form = document.querySelector('.auth-form');
+    if (!form) return;
+
     form.style.opacity = '0';
     form.style.transform = 'translateY(30px)';
     

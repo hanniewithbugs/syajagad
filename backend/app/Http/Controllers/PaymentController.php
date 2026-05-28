@@ -1,0 +1,391 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Invoice;
+use App\Models\User;
+use App\Models\UserNotification;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+
+class PaymentController extends Controller
+{
+    public static function buildPaymentData(User $user): array
+    {
+        $invoices = Invoice::where('user_id', $user->id)
+            ->orderBy('due_date')
+            ->get();
+
+        if ($invoices->isEmpty()) {
+            return [
+                'invoices' => [],
+                'history' => [],
+                'message' => 'Belum ada tagihan untuk akun ini.',
+            ];
+        }
+
+        $activeInvoices = [];
+        $historyInvoices = [];
+
+        foreach ($invoices as $invoice) {
+            $dueDate = Carbon::parse($invoice->due_date);
+            $status = $invoice->status;
+            $penalty = $invoice->penalty;
+
+            if ($status !== 'lunas' && now()->greaterThan($dueDate)) {
+                $lateMonths = self::calculateLateMonths($dueDate);
+                $penalty = max($penalty, $lateMonths * 50000);
+                if ($status === 'belum' && $lateMonths > 0) {
+                    $status = 'terlambat';
+                }
+            }
+
+            $total = $invoice->amount + $penalty;
+
+            if ($invoice->status !== $status || (int) $invoice->penalty !== (int) $penalty || (int) $invoice->total !== (int) $total) {
+                $invoice->update([
+                    'status' => $status,
+                    'penalty' => $penalty,
+                    'total' => $total,
+                ]);
+            }
+
+            $invoiceData = [
+                'id' => $invoice->id,
+                'name' => $invoice->name,
+                'description' => $invoice->description,
+                'due_date' => $dueDate->format('Y-m-d'),
+                'dueDate' => $dueDate->format('Y-m-d'),
+                'amount' => $invoice->amount,
+                'penalty' => $penalty,
+                'total' => $total,
+                'status' => $status,
+                'paid_date' => self::formatDate($invoice->paid_date),
+                'paidDate' => self::formatDate($invoice->paid_date),
+                'method' => $invoice->payment_method,
+            ];
+
+            if ($status === 'lunas') {
+                $historyInvoices[] = $invoiceData;
+            } else {
+                $activeInvoices[] = $invoiceData;
+            }
+        }
+
+        return [
+            'invoices' => $activeInvoices,
+            'history' => $historyInvoices,
+            'message' => count($activeInvoices) ? '' : 'Semua tagihan sudah lunas.',
+        ];
+    }
+
+    public function checkout(Request $request)
+    {
+        $request->validate([
+            'invoice_id' => ['required', 'integer'],
+            'payment_method' => ['required', 'in:qris,bca,mandiri'],
+        ]);
+
+        $user = Auth::user();
+        $invoice = Invoice::where('user_id', $user->id)
+            ->where('id', $request->integer('invoice_id'))
+            ->first();
+
+        if (! $invoice) {
+            return response()->json(['message' => 'Invoice tidak ditemukan'], 404);
+        }
+
+        if ($invoice->status === 'lunas') {
+            return response()->json(['message' => 'Invoice sudah dibayar'], 400);
+        }
+
+        $serverKey = config('services.midtrans.server_key');
+        $baseUrl = self::midtransBaseUrl();
+
+        $orderId = 'SPP-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(6));
+        $total = $this->currentTotal($invoice);
+
+        $payload = [
+            'transaction_details' => [
+                'order_id' => $orderId,
+                'gross_amount' => $total,
+            ],
+            'item_details' => [
+                [
+                    'id' => 'SPP-' . $invoice->id,
+                    'price' => $total,
+                    'quantity' => 1,
+                    'name' => $invoice->name,
+                ],
+            ],
+            'customer_details' => [
+                'first_name' => $user->name,
+                'email' => $user->email,
+            ],
+            'enabled_payments' => $this->enabledPayments($request->payment_method),
+        ];
+
+        $invoice->update([
+            'midtrans_order_id' => $orderId,
+            'payment_method' => $request->payment_method,
+            'penalty' => max($invoice->penalty, $total - $invoice->amount),
+            'total' => $total,
+        ]);
+
+        if (blank($serverKey)) {
+            return response()->json([
+                'message' => 'Midtrans belum dikonfigurasi. Isi MIDTRANS_SERVER_KEY dan MIDTRANS_CLIENT_KEY di file .env.',
+            ], 422);
+        }
+
+        $response = Http::withBasicAuth($serverKey, '')
+            ->post($baseUrl . '/snap/v1/transactions', $payload);
+
+        if (! $response->successful()) {
+            return response()->json([
+                'message' => 'Gagal membuat transaksi Midtrans',
+                'errors' => $response->json(),
+            ], $response->status() >= 400 && $response->status() < 500 ? 422 : 500);
+        }
+
+        return response()->json([
+            'snap_token' => $response->json('token'),
+            'redirect_url' => $response->json('redirect_url'),
+            'order_id' => $orderId,
+            'gross_amount' => $total,
+        ]);
+    }
+
+    public function confirm(Request $request)
+    {
+        $request->validate([
+            'invoice_id' => ['required', 'integer'],
+            'order_id' => ['required', 'string'],
+            'transaction_id' => ['nullable', 'string'],
+            'payment_method' => ['required', 'in:qris,bca,mandiri'],
+            'status' => ['required', 'in:success,pending,error'],
+        ]);
+
+        $user = Auth::user();
+        $invoice = Invoice::where('user_id', $user->id)
+            ->where('id', $request->integer('invoice_id'))
+            ->first();
+
+        if (! $invoice) {
+            return response()->json(['message' => 'Invoice tidak ditemukan'], 404);
+        }
+
+        if ($invoice->midtrans_order_id !== $request->order_id) {
+            return response()->json(['message' => 'Order ID tidak sesuai dengan invoice.'], 422);
+        }
+
+        if ($request->status === 'success' && blank(config('services.midtrans.server_key'))) {
+            return response()->json(['message' => 'Midtrans belum dikonfigurasi.'], 422);
+        }
+
+        $sync = $this->syncInvoiceWithMidtrans($invoice);
+
+        return response()->json([
+            'success' => $sync['paid'],
+            'pending' => $sync['pending'],
+            'message' => $sync['message'],
+            'invoice_status' => $invoice->fresh()->status,
+        ]);
+    }
+
+    public function status(Invoice $invoice)
+    {
+        if ($invoice->user_id !== Auth::id()) {
+            abort(404);
+        }
+
+        if (! $invoice->midtrans_order_id) {
+            return response()->json([
+                'paid' => $invoice->status === 'lunas',
+                'pending' => false,
+                'message' => 'Belum ada transaksi Midtrans untuk invoice ini.',
+            ]);
+        }
+
+        $sync = $this->syncInvoiceWithMidtrans($invoice);
+
+        return response()->json($sync + [
+            'invoice_status' => $invoice->fresh()->status,
+        ]);
+    }
+
+    public function notification(Request $request)
+    {
+        $payload = $request->all();
+        $serverKey = config('services.midtrans.server_key');
+
+        if (blank($serverKey) || ! $this->isValidNotificationSignature($payload, $serverKey)) {
+            return response()->json(['message' => 'Invalid signature'], 403);
+        }
+
+        $invoice = Invoice::where('midtrans_order_id', $payload['order_id'] ?? null)->first();
+
+        if (! $invoice) {
+            return response()->json(['message' => 'Invoice tidak ditemukan'], 404);
+        }
+
+        $this->applyMidtransStatus($invoice, $payload);
+
+        return response()->json(['success' => true]);
+    }
+
+    private static function calculateLateMonths(Carbon $dueDate): int
+    {
+        $now = now();
+
+        if ($now->lessThanOrEqualTo($dueDate)) {
+            return 0;
+        }
+
+        $months = $dueDate->diffInMonths($now);
+
+        if ($now->day > $dueDate->day) {
+            $months++;
+        }
+
+        return max(0, $months);
+    }
+
+    private static function formatDate(mixed $date): ?string
+    {
+        if (blank($date)) {
+            return null;
+        }
+
+        return $date instanceof Carbon
+            ? $date->format('Y-m-d')
+            : Carbon::parse($date)->format('Y-m-d');
+    }
+
+    private function enabledPayments(string $method): array
+    {
+        return match ($method) {
+            'qris' => ['gopay', 'shopeepay'],
+            'bca' => ['bca_va'],
+            'mandiri' => ['echannel'],
+            default => ['gopay', 'shopeepay', 'bca_va', 'echannel'],
+        };
+    }
+
+    private function currentTotal(Invoice $invoice): int
+    {
+        $dueDate = Carbon::parse($invoice->due_date);
+        $penalty = $invoice->penalty;
+
+        if ($invoice->status !== 'lunas' && now()->greaterThan($dueDate)) {
+            $penalty = max($penalty, self::calculateLateMonths($dueDate) * 50000);
+        }
+
+        return (int) $invoice->amount + (int) $penalty;
+    }
+
+    private static function midtransBaseUrl(): string
+    {
+        return config('services.midtrans.is_production')
+            ? 'https://api.midtrans.com'
+            : 'https://api.sandbox.midtrans.com';
+    }
+
+    private function syncInvoiceWithMidtrans(Invoice $invoice): array
+    {
+        $serverKey = config('services.midtrans.server_key');
+
+        if (blank($serverKey)) {
+            return [
+                'paid' => false,
+                'pending' => false,
+                'message' => 'Midtrans belum dikonfigurasi.',
+            ];
+        }
+
+        $response = Http::withBasicAuth($serverKey, '')
+            ->get(self::midtransBaseUrl() . '/v2/' . $invoice->midtrans_order_id . '/status');
+
+        if (! $response->successful()) {
+            return [
+                'paid' => false,
+                'pending' => false,
+                'message' => 'Status pembayaran belum tersedia dari Midtrans.',
+                'errors' => $response->json(),
+            ];
+        }
+
+        return $this->applyMidtransStatus($invoice, $response->json());
+    }
+
+    private function applyMidtransStatus(Invoice $invoice, array $payload): array
+    {
+        $wasPaid = $invoice->status === 'lunas';
+        $transactionStatus = $payload['transaction_status'] ?? null;
+        $fraudStatus = $payload['fraud_status'] ?? null;
+        $isPaid = $transactionStatus === 'settlement'
+            || ($transactionStatus === 'capture' && in_array($fraudStatus, [null, 'accept'], true));
+        $isPending = $transactionStatus === 'pending';
+
+        $invoice->update([
+            'midtrans_transaction_id' => $payload['transaction_id'] ?? $invoice->midtrans_transaction_id,
+            'payment_method' => $this->normalizePaymentMethod($payload['payment_type'] ?? $invoice->payment_method),
+            'midtrans_response' => $payload,
+        ]);
+
+        if ($isPaid) {
+            $invoice->update([
+                'status' => 'lunas',
+                'paid_date' => now()->format('Y-m-d'),
+            ]);
+
+            if (! $wasPaid) {
+                UserNotification::create([
+                    'user_id' => $invoice->user_id,
+                    'type' => 'payment_paid',
+                    'title' => 'Pembayaran berhasil',
+                    'message' => "Tagihan {$invoice->name} telah lunas. Terima kasih.",
+                    'metadata' => ['invoice_id' => $invoice->id],
+                ]);
+            }
+        }
+
+        return [
+            'paid' => $isPaid,
+            'pending' => $isPending,
+            'message' => $isPaid
+                ? 'Pembayaran berhasil dan invoice sudah dilunasi.'
+                : ($isPending ? 'Pembayaran masih menunggu penyelesaian di Midtrans.' : 'Pembayaran belum berhasil.'),
+            'transaction_status' => $transactionStatus,
+        ];
+    }
+
+    private function normalizePaymentMethod(?string $paymentType): ?string
+    {
+        return match ($paymentType) {
+            'bank_transfer', 'bca_va' => 'bca',
+            'echannel' => 'mandiri',
+            'gopay', 'qris', 'shopeepay' => 'qris',
+            default => $paymentType,
+        };
+    }
+
+    private function isValidNotificationSignature(array $payload, string $serverKey): bool
+    {
+        foreach (['order_id', 'status_code', 'gross_amount', 'signature_key'] as $key) {
+            if (! isset($payload[$key])) {
+                return false;
+            }
+        }
+
+        $signature = hash(
+            'sha512',
+            $payload['order_id'] . $payload['status_code'] . $payload['gross_amount'] . $serverKey
+        );
+
+        return hash_equals($signature, $payload['signature_key']);
+    }
+}

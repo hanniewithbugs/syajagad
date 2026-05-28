@@ -10,10 +10,17 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withCommands([
+        App\Console\Commands\ImportSantriRekapCommand::class,
+    ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => App\Http\Middleware\RoleMiddleware::class,
         ]);
+
+        $middleware->redirectUsersTo(function ($request) {
+            return $request->user()?->role === 'admin' ? '/dbAdmin' : '/dbSantri';
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

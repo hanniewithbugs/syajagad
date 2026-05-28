@@ -18,7 +18,48 @@
                     <span>SyaJagad</span>
                 </div>
                 <h1>Bergabung dengan Komunitas</h1>
-                <p>Daftar untuk mengelola SPP atau administrasi secara online</p>
+                <p>Halo, calon pengguna baru. Yuk mulai dengan langkah yang sederhana dan nyaman.</p>
+                <div class="floating-cards">
+                    <div class="auth-visual">
+                        <div class="auth-preview-card auth-welcome-card">
+                            <div class="auth-visual-top">
+                                <div class="auth-visual-icon">
+                                    <i class="fas fa-seedling"></i>
+                                </div>
+                                <div>
+                                    <span>Halo baru</span>
+                                    <strong>Selamat bergabung</strong>
+                                </div>
+                                <span class="auth-status-pill">Mulai</span>
+                            </div>
+
+                            <div class="auth-greeting-portrait">
+                                <div class="auth-user-bubble auth-user-main">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <div class="auth-user-bubble auth-user-small">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="auth-user-ring"></div>
+                            </div>
+
+                            <div class="auth-welcome-lines">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+
+                        <div class="auth-floating-card auth-float-one">
+                            <i class="fas fa-hand-peace"></i>
+                            <span>Halo baru</span>
+                        </div>
+                        <div class="auth-floating-card auth-float-two">
+                            <i class="fas fa-star"></i>
+                            <span>Mulai nyaman</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -50,14 +91,14 @@
                         <label>NIS (Nomor Induk Santri) *</label>
                         <div class="input-wrapper">
                             <i class="fas fa-id-card"></i>
-                            <input type="text" id="nis" name="nis" placeholder="123456" maxlength="10" required>
+                            <input type="text" id="nis" name="nis" value="{{ old('nis') }}" placeholder="123456" maxlength="20" required autofocus>
                         </div>
                     </div>
                     <div class="input-group half">
                         <label>Nama Lengkap *</label>
                         <div class="input-wrapper">
                             <i class="fas fa-user"></i>
-                            <input type="text" id="nama" name="name" placeholder="Ahmad Santoso" required>
+                            <input type="text" id="nama" name="name" value="{{ old('name') }}" placeholder="Ahmad Santoso" required>
                         </div>
                     </div>
                 </div>
@@ -68,31 +109,19 @@
                         <label>Tanggal Lahir *</label>
                         <div class="input-wrapper">
                             <i class="fas fa-calendar"></i>
-                            <input type="date" id="tglLahir" name="tgl_lahir" required>
+                            <input type="date" id="tglLahir" name="tgl_lahir" value="{{ old('tgl_lahir') }}" required>
                         </div>
                     </div>
                     <div class="input-group half">
                         <label>Alamat *</label>
                         <div class="input-wrapper">
                             <i class="fas fa-map-marker-alt"></i>
-                            <input type="text" id="alamat" name="alamat" placeholder="Jl. Pondok Pesantren No. 123" required>
+                            <input type="text" id="alamat" name="alamat" value="{{ old('alamat') }}" placeholder="Jl. Pondok Pesantren No. 123" required>
                         </div>
                     </div>
                 </div>
 
-                <!-- Row 3: Peran/Role -->
-                <div class="input-group">
-                    <label>Pilih Peran *</label>
-                    <div class="input-wrapper select-wrapper">
-                        <i class="fas fa-user-tag"></i>
-                        <select id="role" name="role" required>
-                            <option value="">-- Pilih Peran --</option>
-                            <option value="santri">Santri</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                        <i class="fas fa-chevron-down select-arrow"></i>
-                    </div>
-                </div>
+                <input type="hidden" id="role" name="role" value="santri">
 
                 <!-- Row 4: Email + Username -->
                 <div class="input-row">
@@ -100,14 +129,14 @@
                         <label>Email / Gmail *</label>
                         <div class="input-wrapper">
                             <i class="fas fa-envelope"></i>
-                            <input type="email" id="email" name="email" placeholder="santri@pondok.ac.id" required>
+                            <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="santri@pondok.ac.id" required>
                         </div>
                     </div>
                     <div class="input-group half">
                         <label>Username *</label>
                         <div class="input-wrapper">
                             <i class="fas fa-at"></i>
-                            <input type="text" id="username" name="username" placeholder="santri123" required>
+                            <input type="text" id="username" name="username" value="{{ old('username') }}" placeholder="santri123" required>
                         </div>
                     </div>
                 </div>

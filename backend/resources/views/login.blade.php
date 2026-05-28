@@ -18,8 +18,47 @@
                     <span>SyaJagad</span>
                 </div>
                 <h1>Selamat Datang Kembali</h1>
-                <p>Sistem pembayaran SPP santri & administrasi Pondok Pesantren Mahasiswa Jagad 'Alimussirry</p>
+                <p>Senang melihatmu kembali. Masuk sebentar, lalu lanjutkan aktivitasmu dengan tenang.</p>
                 <div class="floating-cards">
+                    <div class="auth-visual">
+                        <div class="auth-preview-card auth-welcome-card">
+                            <div class="auth-visual-top">
+                                <div class="auth-visual-icon">
+                                    <i class="fas fa-hand-sparkles"></i>
+                                </div>
+                                <div>
+                                    <span>Halo lagi</span>
+                                    <strong>Selamat datang</strong>
+                                </div>
+                                <span class="auth-status-pill">Siap</span>
+                            </div>
+
+                            <div class="auth-greeting-portrait">
+                                <div class="auth-user-bubble auth-user-main">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="auth-user-bubble auth-user-small">
+                                    <i class="fas fa-heart"></i>
+                                </div>
+                                <div class="auth-user-ring"></div>
+                            </div>
+
+                            <div class="auth-welcome-lines">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+
+                        <div class="auth-floating-card auth-float-one">
+                            <i class="fas fa-smile"></i>
+                            <span>Senang melihatmu</span>
+                        </div>
+                        <div class="auth-floating-card auth-float-two">
+                            <i class="fas fa-star"></i>
+                            <span>Hari yang baik</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -41,12 +80,17 @@
                         {{ session('error') }}
                     </div>
                 @endif
-                <!-- Username/Email -->
+                @if($errors->any())
+                    <div class="alert-error" style="margin-bottom:12px;color:#b91c1c;background:#fee2e2;padding:10px 12px;border-radius:8px;">
+                        {{ $errors->first() }}
+                    </div>
+                @endif
+                <!-- Login ID -->
                 <div class="input-group">
-                    <label>NIS / Email *</label>
+                    <label>Email / Username / NIS *</label>
                     <div class="input-wrapper">
                         <i class="fas fa-user"></i>
-                        <input type="text" name="email" placeholder="Masukkan NIS atau Email" required>
+                        <input type="text" name="email" value="{{ old('email') }}" placeholder="Email, username, atau NIS" required autofocus>
                     </div>
                 </div>
 
@@ -58,8 +102,8 @@
                         <i class="fas fa-user-tag"></i>
                         <select id="loginRole" name="role" required>
                             <option value="">-- Pilih Peran --</option>
-                            <option value="santri">Santri</option>
-                            <option value="admin">Admin</option>
+                            <option value="santri" @selected(old('role') === 'santri')>Santri</option>
+                            <option value="admin" @selected(old('role') === 'admin')>Admin</option>
                         </select>
                         <i class="fas fa-chevron-down select-arrow"></i>
                     </div>
@@ -77,7 +121,7 @@
 
                 <!-- Forgot Password -->
                 <div class="forgot-password">
-                    <a href="#" id="forgotPassword">Lupa Password?</a>
+                    <span>Lupa password? Hubungi admin pondok.</span>
                 </div>
 
                 <!-- Login Button -->
@@ -97,14 +141,6 @@
                 </a>
             </div>
 
-            <!-- Google Login (Optional) -->
-            <div class="social-login">
-                <p>atau login dengan</p>
-                <button type="button" class="google-btn">
-                    <i class="fab fa-google"></i>
-                    Google
-                </button>
-            </div>
         </div>
     </div>
 

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Admin Dashboard - SyaJagad</title>
     <link rel="stylesheet" href="{{ asset('css/dbSantri.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -32,8 +33,8 @@
                 <div class="avatar-status online"></div>
             </div>
             <div class="profile-info">
-                <h4>Admin Ponpes JA</h4>
-                <span class="profile-role">Admin 1</span>
+                <h4>{{ Auth::user()->name }}</h4>
+                <span class="profile-role">Admin - {{ Auth::user()->username }}</span>
             </div>
         </div>
 
@@ -122,19 +123,19 @@
                 </div>
                 <button class="topbar-notif" id="notifBtn">
                     <i class="fas fa-bell"></i>
-                    <div class="notif-badge" id="notifBadge">3</div>
+                    <div class="notif-badge" id="notifBadge">0</div>
                 </button>
                 <button class="topbar-message" id="messageBtn">
                     <i class="fas fa-envelope"></i>
-                    <div class="notif-badge">2</div>
+                    <div class="notif-badge" id="messageBadge">0</div>
                 </button>
                 <div class="topbar-profile">
                     <div class="tp-avatar">
                         <i class="fas fa-user-shield"></i>
                     </div>
                     <div class="tp-info">
-                        <span class="tp-name">Admin Ponpes JA</span>
-                        <span class="tp-role">Admin 1</span>
+                        <span class="tp-name">{{ Auth::user()->name }}</span>
+                        <span class="tp-role">Admin</span>
                     </div>
                 </div>
             </div>
@@ -144,22 +145,22 @@
         <div class="page active" id="page-dashboard">
             <div class="page-content dashboard-modified">
                 <!-- Page Header -->
- <div class="welcome-banner">
+                <div class="welcome-banner">
                     <div class="welcome-left">
                         <div class="welcome-greeting">
                             <span class="greeting-time" id="greetingTime">Selamat Pagi</span>
                             <span class="greeting-emoji">👨‍💼</span>
                         </div>
-                        <h2>Selamat Datang, Admin!</h2>
+                        <h2>Selamat Datang, {{ Auth::user()->name }}!</h2>
                         <p>Sistem manajemen santri dan pembayaran SyaJagad berjalan optimal. Pantau performa dan kelola data secara real-time.</p>
                     </div>
                     <div class="welcome-right">
                         <div class="welcome-illustration">
-                            <div class="wi-dashboard">
-                                <i class="fas fa-chart-line"></i>
+                            <div class="wi-mosque">
+                                <i class="fas fa-mosque"></i>
                             </div>
-                            <div class="wi-users">
-                                <i class="fas fa-users"></i>
+                            <div class="wi-ai-brain">
+                                <i class="fas fa-chart-line"></i>
                             </div>
                             <div class="wi-coins">
                                 <div class="wi-coin c1">Rp</div>
@@ -214,7 +215,7 @@
                             <thead>
                                 <tr>
                                     <th>Nama Santri</th>
-                                    <th>Bulan</th>
+                                    <th>Tagihan Semester</th>
                                     <th>Tanggal Bayar</th>
                                     <th>Status</th>
                                 </tr>
@@ -259,6 +260,19 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="ai-insight-panel">
+                    <div class="ai-insight-header">
+                        <div>
+                            <h3><i class="fas fa-brain"></i> Insight Risiko Pembayaran</h3>
+                            <p>Skor awal berbasis histori tagihan untuk membantu prioritas follow-up.</p>
+                        </div>
+                        <span id="highRiskCount">0 risiko tinggi</span>
+                    </div>
+                    <div class="ai-insight-list" id="riskInsightList">
+                        <div class="text-center">Memuat insight...</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -279,9 +293,10 @@
                         </div>
                         <select id="filterStatus">
                             <option value="">Semua Status</option>
-                            <option value="aktif">Aktif</option>
                             <option value="cuti">Cuti</option>
-                            <option value="alumni">Alumni</option>
+                            <option value="menunggak">Menunggak</option>
+                            <option value="belum lunas">Belum Lunas</option>
+                            <option value="lunas">Lunas</option>
                         </select>
                     </div>
                     <button class="btn-primary" id="addSantriBtn">
@@ -332,8 +347,8 @@
                         </div>
                         <div class="sc-info">
                             <span class="sc-label">Total Menunggak</span>
-                            <span class="sc-value">35 Santri</span>
-                            <span class="sc-sub">Rp 8.750.000</span>
+                            <span class="sc-value" id="paymentOverdueCount">0 Santri</span>
+                            <span class="sc-sub" id="paymentOverdueAmount">Rp 0</span>
                         </div>
                     </div>
                     <div class="summary-card card-success">
@@ -342,8 +357,8 @@
                         </div>
                         <div class="sc-info">
                             <span class="sc-label">Bayar Semester Ini</span>
-                            <span class="sc-value">85 Santri</span>
-                            <span class="sc-sub">Rp 42.500.000</span>
+                            <span class="sc-value" id="paymentPaidCount">0 Santri</span>
+                            <span class="sc-sub" id="paymentPaidAmount">Rp 0</span>
                         </div>
                     </div>
                 </div>
@@ -369,7 +384,7 @@
                                 <th>Jenis Kelamin</th>
                                 <th>Angkatan</th>
                                 <th>Status Santri</th>
-                                <th>Bulan Tagihan</th>
+                                <th>Tagihan Semester</th>
                                 <th>Status Pembayaran</th>
                             </tr>
                         </thead>
@@ -398,7 +413,7 @@
                     <div class="filter-group">
                         <select>
                             <option>Jenis Laporan</option>
-                            <option>Pembayaran Bulanan</option>
+                            <option>Pembayaran Semesteran</option>
                             <option>Pendapatan Tahunan</option>
                             <option>Tunggakan SPP</option>
                         </select>
@@ -434,20 +449,20 @@
                 <div class="report-summary">
                     <div class="summary-item">
                         <div class="label">Total Pendapatan Terverifikasi</div>
-                        <div class="value">Rp 42.500.000</div>
+                        <div class="value" id="reportRevenue">Rp 0</div>
                     </div>
                     <div class="summary-item">
                         <div class="label">Total Tunggakan SPP</div>
-                        <div class="value">35 Santri</div>
-                        <div class="sub-value">Rp 7.500.000</div>
+                        <div class="value" id="reportOverdue">0 Santri</div>
+                        <div class="sub-value" id="reportOutstanding">Rp 0</div>
                     </div>
                     <div class="summary-item">
                         <div class="label">Tingkat Kolektibilitas</div>
-                        <div class="value">71%</div>
+                        <div class="value" id="reportCollectibility">0%</div>
                     </div>
                     <div class="summary-item">
                         <div class="label">Menunggu Verifikasi</div>
-                        <div class="value">12 Transaksi</div>
+                        <div class="value" id="reportPending">0 Transaksi</div>
                     </div>
                 </div>
 
@@ -490,23 +505,24 @@
                         <div class="card-body">
                             <div class="profile-field">
                                 <label>Nama Institusi</label>
-                                <input type="text" value="Ponpes Jendela Alam" class="form-input">
+                                <input type="text" id="institutionName" value="Ponpes Jagad 'Alimussirry" class="form-input">
                             </div>
                             <div class="profile-field">
                                 <label>Alamat</label>
-                                <input type="text" value="Jl. Pesantren No. 123, Jakarta" class="form-input">
+                                <input type="text" id="institutionAddress" value="Jl. Jetis Kulon VI No.16A, Surabaya" class="form-input">
                             </div>
                             <div class="profile-field">
                                 <label>Email</label>
-                                <input type="email" value="admin@ponpesja.ac.id" class="form-input">
+                                <input type="email" id="institutionEmail" value="jagad_alimussirry99@yahoo.co.id" class="form-input">
                             </div>
                             <div class="profile-field">
                                 <label>Telepon</label>
-                                <input type="tel" value="(021) 12345678" class="form-input">
+                                <input type="tel" id="institutionPhone" value="+62 821-3621-2570" class="form-input">
                             </div>
-                            <button class="btn-primary" style="width: 100%; margin-top: 1rem;">
+                            <button class="btn-primary" id="saveInstitutionBtn" style="width: 100%; margin-top: 1rem;">
                                 <i class="fas fa-save"></i> Simpan Perubahan
                             </button>
+                            <small class="settings-hint" id="institutionSaveStatus"></small>
                         </div>
                     </div>
 
@@ -518,28 +534,54 @@
                         <div class="card-body">
                             <div class="profile-field">
                                 <label>Kata Sandi Lama</label>
-                                <input type="password" placeholder="Masukkan kata sandi lama" class="form-input">
+                                <input type="password" id="oldPassword" placeholder="Masukkan kata sandi lama" class="form-input">
                             </div>
                             <div class="profile-field">
                                 <label>Kata Sandi Baru</label>
-                                <input type="password" placeholder="Masukkan kata sandi baru" class="form-input">
+                                <input type="password" id="newPassword" placeholder="Masukkan kata sandi baru" class="form-input">
                             </div>
                             <div class="profile-field">
                                 <label>Konfirmasi Kata Sandi</label>
-                                <input type="password" placeholder="Konfirmasi kata sandi baru" class="form-input">
+                                <input type="password" id="confirmNewPassword" placeholder="Konfirmasi kata sandi baru" class="form-input">
                             </div>
-                            <button class="btn-primary" style="width: 100%; margin-top: 1rem;">
+                            <button class="btn-primary" id="changePasswordBtn" style="width: 100%; margin-top: 1rem;">
                                 <i class="fas fa-lock"></i> Ubah Kata Sandi
                             </button>
+                            <small class="settings-hint" id="passwordChangeStatus"></small>
                             <div style="margin-top: 1.5rem;">
                                 <label class="toggle-item">
                                     <input type="checkbox" id="twoFactorAuth">
                                     <span class="toggle-switch"></span>
                                     Autentikasi Dua Faktor
                                 </label>
-                                <button class="btn-primary" style="width: 100%; margin-top: 1rem;">
+                                <button class="btn-primary" id="manageRolesBtn" style="width: 100%; margin-top: 1rem;">
                                     <i class="fas fa-users-cog"></i> Kelola Peran
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-user-lock"></i> Permission Admin</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="permission-list" id="adminPermissionList">
+                                <div class="text-center">Memuat permission admin...</div>
+                            </div>
+                            <small class="settings-hint" id="permissionSaveStatus"></small>
+                        </div>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-clipboard-list"></i> Audit Log</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="audit-log-list" id="auditLogList">
+                                <div class="text-center">Memuat audit log...</div>
                             </div>
                         </div>
                     </div>
@@ -554,22 +596,22 @@
                         <div class="payment-config-list">
                             <div class="payment-config-item">
                                 <div class="pci-info">
-                                    <div class="pci-name">SPP Bulanan</div>
-                                    <div class="pci-amount">Rp 250.000</div>
+                                    <div class="pci-name">Denda</div>
+                                    <div class="pci-amount" id="settingPenalty">Rp 0</div>
                                 </div>
-                                <button class="btn-edit"><i class="fas fa-edit"></i></button>
+                                <button class="btn-edit" data-setting-action="penalty"><i class="fas fa-eye"></i></button>
                             </div>
                             <div class="payment-config-item">
                                 <div class="pci-info">
                                     <div class="pci-name">SPP Semesteran</div>
-                                    <div class="pci-amount">Rp 1.200.000</div>
+                                    <div class="pci-amount" id="settingSemesterFee">Rp 2.200.000</div>
                                 </div>
-                                <button class="btn-edit"><i class="fas fa-edit"></i></button>
+                                <button class="btn-edit" data-setting-action="semester"><i class="fas fa-eye"></i></button>
                             </div>
                         </div>
                         <div class="payment-stats">
                             <div class="stat-item">
-                                <strong>Total Pembayaran: Rp 50.000.000</strong>
+                                <strong id="settingTotalPayment">Total Pembayaran: Rp 0</strong>
                             </div>
                         </div>
                     </div>
@@ -583,15 +625,16 @@
                         </div>
                         <div class="card-body toggle-group">
                             <label class="toggle-item">
-                                <input type="checkbox" checked>
+                                <input type="checkbox" id="bankMandiri" checked>
                                 <span class="toggle-switch"></span>
                                 Bank Mandiri VA
                             </label>
                             <label class="toggle-item">
-                                <input type="checkbox" checked>
+                                <input type="checkbox" id="bankBca" checked>
                                 <span class="toggle-switch"></span>
                                 Bank BCA VA
                             </label>
+                            <small class="settings-hint" id="bankStatusText">Mandiri VA dan BCA VA aktif.</small>
                         </div>
                     </div>
                     <div class="content-card">
@@ -601,21 +644,97 @@
                         <div class="card-body period-controls">
                             <label>
                                 Mulai
-                                <input type="date" value="2024-07-01">
+                                <input type="date" id="periodStart" value="2026-01-01">
                             </label>
                             <label>
                                 Selesai
-                                <input type="date" value="2025-06-30">
+                                <input type="date" id="periodEnd" value="2026-06-30">
                             </label>
-                            <button class="btn-primary">
+                            <button class="btn-primary" id="savePeriodBtn">
                                 <i class="fas fa-edit"></i> Edit Periode
                             </button>
+                            <small class="settings-hint" id="periodSaveStatus"></small>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
+
+    <!-- ===== ADD SANTRI MODAL ===== -->
+    <div class="modal-overlay" id="addSantriModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="santriModalTitle"><i class="fas fa-user-plus"></i> Tambah Data Santri</h3>
+                <button class="modal-close" id="addSantriClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nama Lengkap</label>
+                        <input type="text" id="santriName" placeholder="Masukkan nama lengkap">
+                        <small class="form-error" id="errorSantriName"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>NIS</label>
+                        <input type="text" id="santriNIS" placeholder="Masukkan NIS">
+                        <small class="form-error" id="errorSantriNIS"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>Jenis Kelamin</label>
+                        <select id="santriGender">
+                            <option value="">Pilih jenis kelamin</option>
+                            <option value="Laki-laki">Laki-laki</option>
+                            <option value="Perempuan">Perempuan</option>
+                        </select>
+                        <small class="form-error" id="errorSantriGender"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>Status Santri</label>
+                        <select id="santriStatus">
+                            <option value="aktif">Aktif</option>
+                            <option value="cuti">Cuti</option>
+                        </select>
+                        <small class="form-error" id="errorSantriStatus"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="santriEmail" placeholder="Masukkan email santri">
+                        <small class="form-error" id="errorSantriEmail"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="santriUsername" placeholder="Masukkan username">
+                        <small class="form-error" id="errorSantriUsername"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="santriPassword" placeholder="Masukkan password">
+                        <small class="form-error" id="errorSantriPassword"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>Tanggal Lahir</label>
+                        <input type="date" id="santriBirthday">
+                        <small class="form-error" id="errorSantriBirthday"></small>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Alamat</label>
+                        <textarea id="santriAddress" rows="3" placeholder="Masukkan alamat lengkap"></textarea>
+                        <small class="form-error" id="errorSantriAddress"></small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-cancel" id="addSantriCancel">Batal</button>
+                <button class="modal-pay" id="saveSantriBtn">
+                    <i class="fas fa-save"></i>
+                    Simpan Santri
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- ===== LOGOUT CONFIRM MODAL ===== -->
     <div class="modal-overlay" id="logoutModal">
@@ -638,10 +757,117 @@
         </div>
     </div>
 
+    </div>
+
+    <div class="modal-overlay" id="adminNotificationModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fas fa-bell"></i> Notifikasi Admin</h3>
+                <button class="modal-close" id="adminNotificationClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="notification-list" id="adminNotificationList">
+                    <div class="text-center">Belum ada notifikasi.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-cancel" id="adminNotificationDismiss">Tutup</button>
+                <button class="modal-pay" id="adminNotificationEmail">
+                    <i class="fas fa-envelope"></i>
+                    Email Wali/Santri
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="santriInvoiceModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-invoice"></i> Detail Invoice Santri</h3>
+                <button class="modal-close" id="closeInvoiceModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="invoice-summary">
+                    <p id="invoiceModalStudent"></p>
+                    <small id="invoiceModalRisk" class="settings-hint"></small>
+                </div>
+                <div class="invoice-create-panel">
+                    <h4><i class="fas fa-plus-circle"></i> Buat Tagihan Baru</h4>
+                    <div class="form-grid invoice-form-grid">
+                        <div class="form-group">
+                            <label>Nama Tagihan</label>
+                            <input type="text" id="invoiceName" placeholder="Otomatis: SPP Semester Genap/Ganjil" readonly>
+                            <small class="form-error" id="errorInvoiceName"></small>
+                        </div>
+                        <div class="form-group">
+                            <label>Jatuh Tempo Semester</label>
+                            <input type="date" id="invoiceDueDate">
+                            <small class="form-error" id="errorInvoiceDueDate"></small>
+                            <small class="settings-hint">Gunakan periode Januari atau Juli. Denda tetap berjalan per bulan setelah jatuh tempo.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Nominal SPP</label>
+                            <input type="number" id="invoiceAmount" min="1000" step="1000" placeholder="2200000">
+                            <small class="form-error" id="errorInvoiceAmount"></small>
+                        </div>
+                        <div class="form-group">
+                            <label>Denda</label>
+                            <input type="number" id="invoicePenalty" min="0" step="1000" placeholder="0">
+                            <small class="form-error" id="errorInvoicePenalty"></small>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Catatan</label>
+                            <textarea id="invoiceDescription" rows="2" placeholder="Opsional"></textarea>
+                        </div>
+                    </div>
+                    <button class="btn-primary invoice-save-btn" id="saveInvoiceBtn">
+                        <i class="fas fa-save"></i> Simpan Tagihan
+                    </button>
+                    <small class="settings-hint" id="invoiceSaveStatus"></small>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Tagihan Semester</th>
+                            <th>Pokok</th>
+                            <th>Denda</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Jatuh Tempo</th>
+                            <th>Tanggal Update</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoiceModalBody"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-cancel" id="closeInvoiceModalBtn">Tutup</button>
+            </div>
+        </div>
+    </div>
+
     <form id="logoutForm" method="POST" action="{{ route('logout') }}" style="display: none;">
         @csrf
     </form>
 
+    @php
+        $adminPermissions = Auth::user()->admin_permissions ?? ['manage_santri', 'manage_invoices', 'manage_permissions', 'view_audit_logs'];
+    @endphp
+    <script>
+        // Pass data user dari Laravel ke JavaScript
+        window.userData = {
+            name: "{{ Auth::user()->name }}",
+            username: "{{ Auth::user()->username }}",
+            email: "{{ Auth::user()->email }}",
+            role: "{{ Auth::user()->role }}"
+        };
+        window.adminPermissions = @json($adminPermissions);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ asset('js/dbAdmin.js') }}"></script>
     <script>
         const logoutLink = document.getElementById('logoutLink');

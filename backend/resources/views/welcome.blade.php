@@ -18,9 +18,12 @@
                 </div>
                 <span>SyaJagad</span>
             </div>
-            <a href="{{ route('login') }}" class="nav-signin">
-                <i class="fas fa-sign-in-alt"></i> Masuk
-            </a>
+            <div class="nav-actions">
+                <a href="{{ route('register') }}" class="nav-register">Daftar</a>
+                <a href="{{ route('login') }}" class="nav-signin">
+                    <i class="fas fa-sign-in-alt"></i> Masuk
+                </a>
+            </div>
         </div>
     </nav>
 
@@ -67,6 +70,10 @@
                     <a href="{{ route('login') }}" class="cta-button primary">
                         <i class="fas fa-rocket"></i>
                         Mulai Bayar Sekarang
+                    </a>
+                    <a href="{{ route('register') }}" class="cta-button secondary">
+                        <i class="fas fa-user-plus"></i>
+                        Daftar Santri
                     </a>
                 </div>
 
