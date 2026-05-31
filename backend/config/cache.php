@@ -2,6 +2,13 @@
 
 use Illuminate\Support\Str;
 
+$isVercel = (bool) (env('VERCEL') || env('VERCEL_ENV') || env('VERCEL_URL'));
+$cacheStore = env('CACHE_STORE', 'database');
+
+if ($isVercel && in_array($cacheStore, ['database', 'file', null, ''], true)) {
+    $cacheStore = 'array';
+}
+
 return [
 
     /*
@@ -15,7 +22,7 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'database'),
+    'default' => $cacheStore,
 
     /*
     |--------------------------------------------------------------------------

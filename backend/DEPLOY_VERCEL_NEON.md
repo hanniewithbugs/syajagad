@@ -52,10 +52,11 @@ APP_URL=https://nama-project.vercel.app
 
 DB_CONNECTION=pgsql
 DATABASE_URL=postgresql://...
+DB_PORT=5432
 DB_SSLMODE=require
 
-SESSION_DRIVER=database
-CACHE_STORE=database
+SESSION_DRIVER=cookie
+CACHE_STORE=array
 QUEUE_CONNECTION=sync
 
 LOG_CHANNEL=stderr
@@ -129,5 +130,5 @@ https://nama-project.vercel.app/payment/notification
 
 - Vercel untuk Laravel memakai community PHP runtime, cukup untuk demo/portfolio/tahap awal.
 - File upload permanen jangan simpan ke storage lokal Vercel. Gunakan Cloudinary/S3/Supabase Storage jika nanti butuh upload.
-- Session dan cache sudah diarahkan ke database supaya cocok dengan serverless.
-- Jika deploy gagal karena database, cek lagi `DATABASE_URL`, `DB_CONNECTION=pgsql`, `DB_SSLMODE=require`, dan pastikan migration Neon sudah dijalankan.
+- Session memakai cookie dan cache memakai array supaya request awal tidak bergantung ke table `sessions`/`cache`.
+- Jika deploy gagal karena database, cek lagi `DATABASE_URL`, `DB_CONNECTION=pgsql`, `DB_PORT=5432`, `DB_SSLMODE=require`, dan pastikan migration Neon sudah dijalankan.

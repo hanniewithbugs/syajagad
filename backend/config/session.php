@@ -2,6 +2,13 @@
 
 use Illuminate\Support\Str;
 
+$isVercel = (bool) (env('VERCEL') || env('VERCEL_ENV') || env('VERCEL_URL'));
+$sessionDriver = env('SESSION_DRIVER', 'database');
+
+if ($isVercel && in_array($sessionDriver, ['database', 'file', null, ''], true)) {
+    $sessionDriver = 'cookie';
+}
+
 return [
 
     /*
@@ -18,7 +25,7 @@ return [
     |
     */
 
-    'driver' => env('SESSION_DRIVER', 'database'),
+    'driver' => $sessionDriver,
 
     /*
     |--------------------------------------------------------------------------
