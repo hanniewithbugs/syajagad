@@ -27,8 +27,11 @@ Salin hasil `base64:...` ke env `APP_KEY` di Vercel.
 backend
 ```
 
-3. Framework preset boleh `Other`.
-4. Deploy akan memakai `backend/vercel.json`.
+3. Framework preset: `Other`.
+4. Build Command: kosongkan/default. Script Composer `vercel` akan menjalankan `npm install` dan `npm run build`.
+5. Deploy akan memakai `backend/vercel.json`.
+
+> Penting: jangan pilih root repo sebagai Root Directory. Root repo berisi file lama/duplikat dan `package.json` Next.js, sedangkan aplikasi production ada di folder `backend`.
 
 ## 4. Environment Variables Vercel
 
@@ -88,7 +91,25 @@ Jika `php` tidak ada di PATH Laragon:
 C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe artisan migrate --force
 ```
 
-## 6. Setelah Deploy
+Untuk proyek ini di Windows Laragon, command validasi yang sudah dipakai:
+
+```powershell
+C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe vendor\bin\phpunit --colors=never
+npm run build
+```
+
+## 6. Push ke GitHub
+
+Pastikan yang masuk GitHub adalah root repo ini, tetapi Vercel tetap diarahkan ke folder `backend`.
+
+```powershell
+git status
+git add .gitignore backend/api/index.php backend/.env.example backend/deploy/env.vercel-neon.example backend/DEPLOY_VERCEL_NEON.md
+git commit -m "Prepare Laravel backend for Vercel deployment"
+git push origin main
+```
+
+## 7. Setelah Deploy
 
 Tes URL:
 
@@ -109,3 +130,4 @@ https://nama-project.vercel.app/payment/notification
 - Vercel untuk Laravel memakai community PHP runtime, cukup untuk demo/portfolio/tahap awal.
 - File upload permanen jangan simpan ke storage lokal Vercel. Gunakan Cloudinary/S3/Supabase Storage jika nanti butuh upload.
 - Session dan cache sudah diarahkan ke database supaya cocok dengan serverless.
+- Jika deploy gagal karena database, cek lagi `DATABASE_URL`, `DB_CONNECTION=pgsql`, `DB_SSLMODE=require`, dan pastikan migration Neon sudah dijalankan.

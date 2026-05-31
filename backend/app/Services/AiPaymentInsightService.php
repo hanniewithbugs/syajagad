@@ -28,7 +28,7 @@ class AiPaymentInsightService
             $response = Http::withToken(config('services.openai.api_key'))
                 ->timeout((int) config('services.openai.timeout', 12))
                 ->post('https://api.openai.com/v1/responses', [
-                    'model' => config('services.openai.model', 'gpt-5.4-mini'),
+                    'model' => config('services.openai.model', 'gpt-5-mini'),
                     'input' => $this->prompt($summary),
                 ]);
 
@@ -53,7 +53,7 @@ class AiPaymentInsightService
                 'recommendation' => Str::limit((string) ($ai['recommendation'] ?? $fallback['recommendation']), 220, ''),
                 'next_action' => Str::limit((string) ($ai['next_action'] ?? $fallback['next_action']), 120, ''),
                 'source' => 'openai',
-                'model' => config('services.openai.model', 'gpt-5.4-mini'),
+                'model' => config('services.openai.model', 'gpt-5-mini'),
             ];
         } catch (\Throwable $exception) {
             return $fallback + [

@@ -3,6 +3,9 @@ node_modules/
 .pnp
 .pnp.js
 
+# Local duplicate workspace copy
+syajagad/
+
 # Build
 .next/
 out/
@@ -33,6 +36,7 @@ next-env.d.ts
 /node_modules/
 /.env
 backend/.env
+backend/public/build/
 /.env.backup
 /.phpunit.result.cache
 /bootstrap/cache/*.php
