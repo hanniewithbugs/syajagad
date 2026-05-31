@@ -5,6 +5,7 @@ $tmpStorage = '/tmp/syajagad';
 foreach ([
     "{$tmpStorage}/app",
     "{$tmpStorage}/app/public",
+    "{$tmpStorage}/bootstrap/cache",
     "{$tmpStorage}/framework/cache",
     "{$tmpStorage}/framework/cache/data",
     "{$tmpStorage}/framework/sessions",
@@ -28,6 +29,11 @@ function putDefaultEnv(string $key, string $value): void
 }
 
 putDefaultEnv('VIEW_COMPILED_PATH', "{$tmpStorage}/framework/views");
+putDefaultEnv('APP_SERVICES_CACHE', "{$tmpStorage}/bootstrap/cache/services.php");
+putDefaultEnv('APP_PACKAGES_CACHE', "{$tmpStorage}/bootstrap/cache/packages.php");
+putDefaultEnv('APP_CONFIG_CACHE', "{$tmpStorage}/bootstrap/cache/config.php");
+putDefaultEnv('APP_ROUTES_CACHE', "{$tmpStorage}/bootstrap/cache/routes.php");
+putDefaultEnv('APP_EVENTS_CACHE', "{$tmpStorage}/bootstrap/cache/events.php");
 putDefaultEnv('LOG_CHANNEL', 'stderr');
 putDefaultEnv('CACHE_STORE', 'array');
 putDefaultEnv('SESSION_DRIVER', 'cookie');
