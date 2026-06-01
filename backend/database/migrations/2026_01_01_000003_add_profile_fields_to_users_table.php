@@ -11,13 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('nis', 20)->nullable()->unique()->after('id');
-            $table->string('username', 50)->nullable()->unique()->after('email');
-            $table->string('role', 20)->default('santri')->after('password');
-            $table->date('tgl_lahir')->nullable()->after('role');
-            $table->string('alamat')->nullable()->after('tgl_lahir');
-        });
+        foreach ([
+            'nis' => fn (Blueprint $table) => $table->string('nis', 20)->nullable()->unique()->after('id'),
+            'username' => fn (Blueprint $table) => $table->string('username', 50)->nullable()->unique()->after('email'),
+            'role' => fn (Blueprint $table) => $table->string('role', 20)->default('santri')->after('password'),
+            'tgl_lahir' => fn (Blueprint $table) => $table->date('tgl_lahir')->nullable()->after('role'),
+            'alamat' => fn (Blueprint $table) => $table->string('alamat')->nullable()->after('tgl_lahir'),
+        ] as $column => $definition) {
+            if (! Schema::hasColumn('users', $column)) {
+                Schema::table('users', $definition);
+            }
+        }
     }
 
     /**

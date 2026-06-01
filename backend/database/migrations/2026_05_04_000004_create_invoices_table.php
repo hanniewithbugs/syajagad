@@ -11,23 +11,25 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('invoices', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->date('due_date');
-            $table->unsignedBigInteger('amount');
-            $table->unsignedBigInteger('penalty')->default(0);
-            $table->unsignedBigInteger('total');
-            $table->enum('status', ['belum', 'lunas', 'terlambat'])->default('belum');
-            $table->string('payment_method')->nullable();
-            $table->string('midtrans_order_id')->nullable();
-            $table->string('midtrans_transaction_id')->nullable();
-            $table->date('paid_date')->nullable();
-            $table->json('midtrans_response')->nullable();
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('invoices')) {
+            Schema::create('invoices', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+                $table->string('name');
+                $table->text('description')->nullable();
+                $table->date('due_date');
+                $table->unsignedBigInteger('amount');
+                $table->unsignedBigInteger('penalty')->default(0);
+                $table->unsignedBigInteger('total');
+                $table->enum('status', ['belum', 'lunas', 'terlambat'])->default('belum');
+                $table->string('payment_method')->nullable();
+                $table->string('midtrans_order_id')->nullable();
+                $table->string('midtrans_transaction_id')->nullable();
+                $table->date('paid_date')->nullable();
+                $table->json('midtrans_response')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

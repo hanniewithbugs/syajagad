@@ -8,9 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->json('admin_permissions')->nullable()->after('role');
-        });
+        if (! Schema::hasColumn('users', 'admin_permissions')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->json('admin_permissions')->nullable()->after('role');
+            });
+        }
     }
 
     public function down(): void

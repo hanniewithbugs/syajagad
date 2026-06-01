@@ -8,18 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('user_notifications', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('type')->default('info');
-            $table->string('title');
-            $table->text('message');
-            $table->json('metadata')->nullable();
-            $table->timestamp('read_at')->nullable();
-            $table->timestamps();
+        if (! Schema::hasTable('user_notifications')) {
+            Schema::create('user_notifications', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+                $table->string('type')->default('info');
+                $table->string('title');
+                $table->text('message');
+                $table->json('metadata')->nullable();
+                $table->timestamp('read_at')->nullable();
+                $table->timestamps();
 
-            $table->index(['user_id', 'read_at']);
-        });
+                $table->index(['user_id', 'read_at']);
+            });
+        }
     }
 
     public function down(): void
