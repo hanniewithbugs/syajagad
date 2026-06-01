@@ -243,7 +243,9 @@ class AuthController extends Controller
         } catch (Throwable $exception) {
             report($exception);
 
-            return 'Database production belum siap. Pastikan DATABASE_URL/DB_CONNECTION di Vercel benar, lalu coba lagi.';
+            $message = $exception::class . ': ' . $exception->getMessage();
+
+            return 'Database production belum siap: ' . str($message)->limit(220);
         }
 
         return null;
