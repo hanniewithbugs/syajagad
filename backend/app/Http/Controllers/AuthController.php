@@ -225,7 +225,12 @@ class AuthController extends Controller
 
             foreach ($requiredTables as $table) {
                 if (! Schema::hasTable($table)) {
-                    Artisan::call('migrate', ['--force' => true]);
+                    $exitCode = Artisan::call('migrate', ['--force' => true, '--no-interaction' => true]);
+
+                    if ($exitCode !== 0) {
+                        throw new \RuntimeException(trim(Artisan::output()) ?: 'Migration command failed.');
+                    }
+
                     break;
                 }
             }
@@ -238,7 +243,11 @@ class AuthController extends Controller
                     ->exists();
 
             if ($demoDataMissing) {
-                Artisan::call('db:seed', ['--force' => true]);
+                $exitCode = Artisan::call('db:seed', ['--force' => true, '--no-interaction' => true]);
+
+                if ($exitCode !== 0) {
+                    throw new \RuntimeException(trim(Artisan::output()) ?: 'Seeder command failed.');
+                }
             }
         } catch (Throwable $exception) {
             report($exception);
