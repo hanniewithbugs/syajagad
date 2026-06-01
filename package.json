@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node -e \"console.log('Root build disabled; Vercel serves Laravel from backend/api/index.php')\"",
     "start": "next start",
     "lint": "next lint"
   },
