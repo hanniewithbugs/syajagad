@@ -135,6 +135,11 @@ function normalizePostgresEnv(): void
 
 function normalizeDatabaseEnv(string $tmpStorage): void
 {
+    if (strtolower(trim((string) getRuntimeEnv('SYAJAGAD_DATABASE_MODE'))) !== 'postgres') {
+        useTmpSqliteDatabase($tmpStorage);
+        return;
+    }
+
     $postgresUrl = getRuntimeEnv('DATABASE_URL')
         ?? getRuntimeEnv('DB_URL')
         ?? getRuntimeEnv('POSTGRES_URL')
@@ -152,15 +157,20 @@ function normalizeDatabaseEnv(string $tmpStorage): void
         && getRuntimeEnv('DB_USERNAME') !== null;
 
     if (! $hasExplicitDatabaseHost || in_array($connection, ['', 'sqlite', 'null', 'pgsql', 'postgres', 'postgresql'], true)) {
-        $sqlitePath = "{$tmpStorage}/database/database.sqlite";
-
-        if (! file_exists($sqlitePath)) {
-            touch($sqlitePath);
-        }
-
-        putRuntimeEnv('DB_CONNECTION', 'sqlite');
-        putRuntimeEnv('DB_DATABASE', $sqlitePath);
+        useTmpSqliteDatabase($tmpStorage);
     }
+}
+
+function useTmpSqliteDatabase(string $tmpStorage): void
+{
+    $sqlitePath = "{$tmpStorage}/database/database.sqlite";
+
+    if (! file_exists($sqlitePath)) {
+        touch($sqlitePath);
+    }
+
+    putRuntimeEnv('DB_CONNECTION', 'sqlite');
+    putRuntimeEnv('DB_DATABASE', $sqlitePath);
 }
 
 function normalizeServerlessStateEnv(): void
