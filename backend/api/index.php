@@ -171,6 +171,10 @@ function useTmpSqliteDatabase(string $tmpStorage): void
 
     putRuntimeEnv('DB_CONNECTION', 'sqlite');
     putRuntimeEnv('DB_DATABASE', $sqlitePath);
+
+    foreach (['DATABASE_URL', 'DB_URL', 'POSTGRES_URL', 'POSTGRES_PRISMA_URL', 'POSTGRES_URL_NON_POOLING'] as $key) {
+        putRuntimeEnv($key, '');
+    }
 }
 
 function normalizeServerlessStateEnv(): void
