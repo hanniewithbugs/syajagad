@@ -10,7 +10,7 @@ return new class extends Migration
     {
         if (! Schema::hasColumn('users', 'gender')) {
             Schema::table('users', function (Blueprint $table) {
-                $table->string('gender')->nullable()->after('nis');
+                $table->string('gender')->nullable();
             });
         }
     }

@@ -10,7 +10,7 @@ return new class extends Migration
     {
         if (! Schema::hasColumn('users', 'admin_permissions')) {
             Schema::table('users', function (Blueprint $table) {
-                $table->json('admin_permissions')->nullable()->after('role');
+                $table->json('admin_permissions')->nullable();
             });
         }
     }

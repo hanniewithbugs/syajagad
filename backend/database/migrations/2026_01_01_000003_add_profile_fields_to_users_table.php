@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         foreach ([
-            'nis' => fn (Blueprint $table) => $table->string('nis', 20)->nullable()->unique()->after('id'),
-            'username' => fn (Blueprint $table) => $table->string('username', 50)->nullable()->unique()->after('email'),
-            'role' => fn (Blueprint $table) => $table->string('role', 20)->default('santri')->after('password'),
-            'tgl_lahir' => fn (Blueprint $table) => $table->date('tgl_lahir')->nullable()->after('role'),
-            'alamat' => fn (Blueprint $table) => $table->string('alamat')->nullable()->after('tgl_lahir'),
+            'nis' => fn (Blueprint $table) => $table->string('nis', 20)->nullable()->unique(),
+            'username' => fn (Blueprint $table) => $table->string('username', 50)->nullable()->unique(),
+            'role' => fn (Blueprint $table) => $table->string('role', 20)->default('santri'),
+            'tgl_lahir' => fn (Blueprint $table) => $table->date('tgl_lahir')->nullable(),
+            'alamat' => fn (Blueprint $table) => $table->string('alamat')->nullable(),
         ] as $column => $definition) {
             if (! Schema::hasColumn('users', $column)) {
                 Schema::table('users', $definition);

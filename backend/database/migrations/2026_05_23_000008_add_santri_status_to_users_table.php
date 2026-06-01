@@ -10,7 +10,7 @@ return new class extends Migration
     {
         if (! Schema::hasColumn('users', 'santri_status')) {
             Schema::table('users', function (Blueprint $table) {
-                $table->string('santri_status', 20)->default('aktif')->after('role');
+                $table->string('santri_status', 20)->default('aktif');
             });
         }
     }
