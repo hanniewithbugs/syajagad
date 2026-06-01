@@ -147,8 +147,11 @@ function normalizeDatabaseEnv(string $tmpStorage): void
     }
 
     $connection = strtolower(trim((string) getRuntimeEnv('DB_CONNECTION')));
+    $hasExplicitDatabaseHost = getRuntimeEnv('DB_HOST') !== null
+        && getRuntimeEnv('DB_DATABASE') !== null
+        && getRuntimeEnv('DB_USERNAME') !== null;
 
-    if ($connection === '' || in_array($connection, ['sqlite', 'null'], true)) {
+    if (! $hasExplicitDatabaseHost || in_array($connection, ['', 'sqlite', 'null', 'pgsql', 'postgres', 'postgresql'], true)) {
         $sqlitePath = "{$tmpStorage}/database/database.sqlite";
 
         if (! file_exists($sqlitePath)) {
