@@ -244,7 +244,21 @@ class AuthController extends Controller
         } catch (Throwable $exception) {
             report($exception);
 
-            $message = $exception::class . ': ' . $exception->getMessage();
+            try {
+                DB::purge();
+
+                $this->runArtisanOrFail('migrate:fresh', [
+                    '--force' => true,
+                    '--seed' => true,
+                    '--no-interaction' => true,
+                ], 'Fresh migration command failed.');
+
+                return null;
+            } catch (Throwable $freshException) {
+                report($freshException);
+
+                $message = $freshException::class . ': ' . $freshException->getMessage();
+            }
 
             return 'Database production belum siap: ' . str($message)->limit(220);
         }
