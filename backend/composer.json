@@ -48,8 +48,7 @@
             "@php artisan test"
         ],
         "vercel": [
-            "npm install",
-            "npm run build"
+            "@php -r \"echo 'Vercel deploy uses vercel-php; no frontend build is required.'.PHP_EOL;\""
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

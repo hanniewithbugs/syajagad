@@ -2,6 +2,9 @@
 .env.*
 !.env.example
 node_modules
+package.json
+package-lock.json
+vite.config.js
 vendor
 storage/logs/*
 storage/framework/cache/*
