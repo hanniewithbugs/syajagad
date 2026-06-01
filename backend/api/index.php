@@ -135,7 +135,7 @@ function normalizePostgresEnv(): void
 
 function normalizeDatabaseEnv(string $tmpStorage): void
 {
-    if (strtolower(trim((string) getRuntimeEnv('SYAJAGAD_DATABASE_MODE'))) !== 'postgres') {
+    if (strtolower(trim((string) getRuntimeEnv('SYAJAGAD_DATABASE_MODE'))) === 'sqlite') {
         useTmpSqliteDatabase($tmpStorage);
         return;
     }

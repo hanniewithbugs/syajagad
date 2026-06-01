@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Throwable;
@@ -225,12 +226,7 @@ class AuthController extends Controller
 
             foreach ($requiredTables as $table) {
                 if (! Schema::hasTable($table)) {
-                    $exitCode = Artisan::call('migrate', ['--force' => true, '--no-interaction' => true]);
-
-                    if ($exitCode !== 0) {
-                        throw new \RuntimeException(trim(Artisan::output()) ?: 'Migration command failed.');
-                    }
-
+                    $this->runMigrations();
                     break;
                 }
             }
@@ -243,11 +239,7 @@ class AuthController extends Controller
                     ->exists();
 
             if ($demoDataMissing) {
-                $exitCode = Artisan::call('db:seed', ['--force' => true, '--no-interaction' => true]);
-
-                if ($exitCode !== 0) {
-                    throw new \RuntimeException(trim(Artisan::output()) ?: 'Seeder command failed.');
-                }
+                $this->runArtisanOrFail('db:seed', ['--force' => true, '--no-interaction' => true], 'Seeder command failed.');
             }
         } catch (Throwable $exception) {
             report($exception);
@@ -258,5 +250,31 @@ class AuthController extends Controller
         }
 
         return null;
+    }
+
+    private function runMigrations(): void
+    {
+        $exitCode = Artisan::call('migrate', ['--force' => true, '--no-interaction' => true]);
+
+        if ($exitCode === 0) {
+            return;
+        }
+
+        DB::purge();
+
+        $this->runArtisanOrFail('migrate:fresh', [
+            '--force' => true,
+            '--seed' => true,
+            '--no-interaction' => true,
+        ], trim(Artisan::output()) ?: 'Migration command failed.');
+    }
+
+    private function runArtisanOrFail(string $command, array $parameters, string $fallbackMessage): void
+    {
+        $exitCode = Artisan::call($command, $parameters);
+
+        if ($exitCode !== 0) {
+            throw new \RuntimeException(trim(Artisan::output()) ?: $fallbackMessage);
+        }
     }
 }
