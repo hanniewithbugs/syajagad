@@ -222,6 +222,8 @@ class AuthController extends Controller
         }
 
         try {
+            $this->rollbackAbortedTransaction();
+
             $requiredTables = ['users', 'invoices', 'audit_logs', 'user_notifications'];
 
             foreach ($requiredTables as $table) {
@@ -245,6 +247,7 @@ class AuthController extends Controller
             report($exception);
 
             try {
+                $this->rollbackAbortedTransaction();
                 DB::purge();
 
                 $this->runArtisanOrFail('migrate:fresh', [
@@ -268,6 +271,8 @@ class AuthController extends Controller
 
     private function runMigrations(): void
     {
+        $this->rollbackAbortedTransaction();
+
         $exitCode = Artisan::call('migrate', ['--force' => true, '--no-interaction' => true]);
 
         if ($exitCode === 0) {
@@ -275,6 +280,7 @@ class AuthController extends Controller
         }
 
         DB::purge();
+        $this->rollbackAbortedTransaction();
 
         $this->runArtisanOrFail('migrate:fresh', [
             '--force' => true,
@@ -289,6 +295,15 @@ class AuthController extends Controller
 
         if ($exitCode !== 0) {
             throw new \RuntimeException(trim(Artisan::output()) ?: $fallbackMessage);
+        }
+    }
+
+    private function rollbackAbortedTransaction(): void
+    {
+        try {
+            DB::unprepared('ROLLBACK');
+        } catch (Throwable) {
+            //
         }
     }
 }
