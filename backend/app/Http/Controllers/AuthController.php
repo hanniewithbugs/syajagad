@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class AuthController extends Controller
 {
@@ -32,6 +35,12 @@ class AuthController extends Controller
             'password' => ['required'],
             'role' => ['required', Rule::in(['admin', 'santri'])],
         ]);
+
+        if ($error = $this->ensureDatabaseReady()) {
+            return back()
+                ->withInput($request->only('email', 'role'))
+                ->with('error', $error);
+        }
 
         $login = trim($validated['email']);
         $user = User::where('role', $validated['role'])
@@ -71,6 +80,12 @@ class AuthController extends Controller
     // proses register
     public function register(Request $request)
     {
+        if ($error = $this->ensureDatabaseReady()) {
+            return back()
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->with('error', $error);
+        }
+
         $validated = $request->validate([
             'nis' => ['required', 'string', 'max:20', 'unique:users,nis'],
             'name' => ['required', 'string', 'max:255'],
@@ -104,6 +119,10 @@ class AuthController extends Controller
             abort(403, 'Akses ditolak untuk role ini.');
         }
 
+        if ($error = $this->ensureDatabaseReady()) {
+            return redirect()->route('login')->with('error', $error);
+        }
+
         return view('dbAdmin');
     }
 
@@ -111,6 +130,10 @@ class AuthController extends Controller
     {
         if (Auth::user()?->role !== 'santri') {
             abort(403, 'Akses ditolak untuk role ini.');
+        }
+
+        if ($error = $this->ensureDatabaseReady()) {
+            return redirect()->route('login')->with('error', $error);
         }
 
         $paymentData = PaymentController::buildPaymentData(Auth::user());
@@ -189,5 +212,40 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login');
+    }
+
+    private function ensureDatabaseReady(): ?string
+    {
+        if (! (env('VERCEL') || env('VERCEL_ENV') || env('VERCEL_URL'))) {
+            return null;
+        }
+
+        try {
+            $requiredTables = ['users', 'invoices', 'audit_logs', 'user_notifications'];
+
+            foreach ($requiredTables as $table) {
+                if (! Schema::hasTable($table)) {
+                    Artisan::call('migrate', ['--force' => true]);
+                    break;
+                }
+            }
+
+            $demoDataMissing = ! User::where('email', 'admin@syajagad.local')->exists()
+                || ! User::where('nis', '24 000 001')->exists()
+                || ! Schema::hasTable('invoices')
+                || ! User::where('nis', '24 000 001')
+                    ->whereHas('invoices')
+                    ->exists();
+
+            if ($demoDataMissing) {
+                Artisan::call('db:seed', ['--force' => true]);
+            }
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return 'Database production belum siap. Pastikan DATABASE_URL/DB_CONNECTION di Vercel benar, lalu coba lagi.';
+        }
+
+        return null;
     }
 }
