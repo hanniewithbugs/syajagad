@@ -177,11 +177,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const savedPeriod = JSON.parse(localStorage.getItem('syajagadPaymentPeriod') || '{}');
-        if (savedPeriod.periodStart) document.getElementById('periodStart').value = savedPeriod.periodStart;
-        if (savedPeriod.periodEnd) document.getElementById('periodEnd').value = savedPeriod.periodEnd;
+        if (savedPeriod.periodStart && document.getElementById('periodStart')) document.getElementById('periodStart').value = savedPeriod.periodStart;
+        if (savedPeriod.periodEnd && document.getElementById('periodEnd')) document.getElementById('periodEnd').value = savedPeriod.periodEnd;
 
-        bankMandiri.checked = localStorage.getItem('syajagadBankMandiri') !== 'false';
-        bankBca.checked = localStorage.getItem('syajagadBankBca') !== 'false';
+        if (bankMandiri) bankMandiri.checked = localStorage.getItem('syajagadBankMandiri') !== 'false';
+        if (bankBca) bankBca.checked = localStorage.getItem('syajagadBankBca') !== 'false';
     };
 
     const updateAdminSummary = () => {
@@ -324,13 +324,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Gagal memuat statistik admin');
             const data = await response.json();
             statsData = data;
-            document.getElementById('totalSantri').textContent = data.totalSantri;
-            document.getElementById('totalPaid').textContent = `${data.totalPaid} Santri`;
-            document.getElementById('totalUnpaid').textContent = `${data.totalUnpaid} Santri`;
-            document.getElementById('totalPemasukan').textContent = formatRupiah(data.totalRevenue);
-            document.getElementById('totalBayar').textContent = formatRupiah(data.totalRevenue);
-            document.getElementById('totalTagihan').textContent = formatRupiah(data.totalTagihan);
-            document.getElementById('sisaTagihan').textContent = formatRupiah(Math.max(data.totalTagihan - data.totalRevenue, 0));
+            setText('totalSantri', data.totalSantri);
+            setText('totalPaid', `${data.totalPaid} Santri`);
+            setText('totalUnpaid', `${data.totalUnpaid} Santri`);
+            setText('totalPemasukan', formatRupiah(data.totalRevenue));
+            setText('totalBayar', formatRupiah(data.totalRevenue));
+            setText('totalTagihan', formatRupiah(data.totalTagihan));
+            setText('sisaTagihan', formatRupiah(Math.max(data.totalTagihan - data.totalRevenue, 0)));
             updateAdminSummary();
             fetchAuditLogs();
             fetchPermissions();
@@ -681,8 +681,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const openInvoiceModal = (student, invoices) => {
         activeInvoiceSantriId = student.id;
-        document.getElementById('invoiceModalStudent').textContent = `${student.name} - NIS ${student.nis}`;
-        document.getElementById('invoiceModalRisk').textContent = `Risiko ${student.risk_label || 'Rendah'} (${student.risk_score ?? 0}) - ${student.risk_reason || 'Pembayaran tertib'}`;
+        setText('invoiceModalStudent', `${student.name} - NIS ${student.nis}`);
+        setText('invoiceModalRisk', `Risiko ${student.risk_label || 'Rendah'} (${student.risk_score ?? 0}) - ${student.risk_reason || 'Pembayaran tertib'}`);
         resetInvoiceForm();
         const invoiceBody = document.getElementById('invoiceModalBody');
         if (!invoiceBody) return;
@@ -768,11 +768,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const resetInvoiceForm = () => {
+        if (!document.getElementById('invoiceDueDate')) return;
         document.getElementById('invoiceDueDate').value = nextSemesterDueDate();
         updateInvoiceSemesterName();
-        document.getElementById('invoiceAmount').value = '2200000';
-        document.getElementById('invoicePenalty').value = '0';
-        document.getElementById('invoiceDescription').value = '';
+        if (document.getElementById('invoiceAmount')) document.getElementById('invoiceAmount').value = '2200000';
+        if (document.getElementById('invoicePenalty')) document.getElementById('invoicePenalty').value = '0';
+        if (document.getElementById('invoiceDescription')) document.getElementById('invoiceDescription').value = '';
         clearInvoiceErrors();
     };
 
@@ -848,6 +849,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const saveSantri = async () => {
+        clearSantriErrors();
         const payload = {
             name: document.getElementById('santriName').value.trim(),
             nis: document.getElementById('santriNIS').value.trim(),
@@ -864,6 +866,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const method = editingSantriId ? 'PUT' : 'POST';
 
         try {
+            saveSantriBtn.disabled = true;
+            saveSantriBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
             const response = await fetch(url, {
                 method,
                 headers: {
@@ -877,7 +881,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (!response.ok) {
                 if (result.errors) {
-                    clearSantriErrors();
                     Object.entries(result.errors).forEach(([field, messages]) => {
                         showSantriError(field, messages[0]);
                     });
@@ -887,11 +890,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             closeAddSantriModal();
             resetSantriForm();
-            fetchSantri(searchSantri?.value || '');
+            await fetchStats();
+            await fetchSantri(searchSantri?.value || '');
+            await fetchPayments();
             alert(editingSantriId ? 'Santri berhasil diubah.' : 'Santri berhasil ditambahkan.');
         } catch (error) {
             console.error(error);
             alert(error.message || 'Terjadi kesalahan saat menyimpan santri');
+        } finally {
+            saveSantriBtn.disabled = false;
+            saveSantriBtn.innerHTML = editingSantriId
+                ? '<i class="fas fa-save"></i> Simpan Perubahan'
+                : '<i class="fas fa-save"></i> Simpan Santri';
         }
     };
 

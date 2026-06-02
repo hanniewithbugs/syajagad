@@ -1,5 +1,18 @@
 <?php
 
+$isVercel = (bool) (env('VERCEL') || env('VERCEL_ENV') || env('VERCEL_URL'));
+$queueConnection = env('QUEUE_CONNECTION', 'database');
+$queueConnection = is_string($queueConnection) ? strtolower(trim($queueConnection)) : $queueConnection;
+$supportedQueueConnections = ['sync', 'database', 'beanstalkd', 'sqs', 'redis', 'deferred', 'background', 'failover', 'null'];
+
+if ($isVercel && in_array($queueConnection, ['database', null, '', 'null'], true)) {
+    $queueConnection = 'sync';
+}
+
+if (! in_array($queueConnection, $supportedQueueConnections, true)) {
+    $queueConnection = $isVercel ? 'sync' : 'database';
+}
+
 return [
 
     /*
@@ -13,7 +26,7 @@ return [
     |
     */
 
-    'default' => env('QUEUE_CONNECTION', 'database'),
+    'default' => $queueConnection,
 
     /*
     |--------------------------------------------------------------------------
@@ -33,6 +46,10 @@ return [
 
         'sync' => [
             'driver' => 'sync',
+        ],
+
+        'null' => [
+            'driver' => 'null',
         ],
 
         'database' => [

@@ -4,9 +4,16 @@ use Illuminate\Support\Str;
 
 $isVercel = (bool) (env('VERCEL') || env('VERCEL_ENV') || env('VERCEL_URL'));
 $cacheStore = env('CACHE_STORE', 'database');
+$cacheStore = is_string($cacheStore) ? strtolower(trim($cacheStore)) : $cacheStore;
 
-if ($isVercel && in_array($cacheStore, ['database', 'file', null, ''], true)) {
+$supportedCacheStores = ['array', 'database', 'file', 'memcached', 'redis', 'dynamodb', 'octane', 'failover', 'null'];
+
+if ($isVercel && in_array($cacheStore, ['database', 'file', null, '', 'null'], true)) {
     $cacheStore = 'array';
+}
+
+if (! in_array($cacheStore, $supportedCacheStores, true)) {
+    $cacheStore = $isVercel ? 'array' : 'database';
 }
 
 return [
@@ -44,6 +51,10 @@ return [
         'array' => [
             'driver' => 'array',
             'serialize' => false,
+        ],
+
+        'null' => [
+            'driver' => 'null',
         ],
 
         'database' => [

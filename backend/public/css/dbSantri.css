@@ -2274,9 +2274,17 @@ body {
     border-radius: var(--radius-lg);
     width: 100%;
     max-width: 700px;
+    max-height: min(90dvh, 760px);
     box-shadow: 0 40px 100px rgba(0,0,0,0.3);
     overflow: hidden;
     animation: slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .form-grid {
@@ -2514,6 +2522,8 @@ body {
     border-top: 1px solid var(--gray-100);
     display: flex;
     gap: 0.75rem;
+    background: var(--white);
+    flex-shrink: 0;
 }
 
 .modal-cancel {
@@ -4753,10 +4763,11 @@ body {
 
     .modal-body {
         padding: 1rem;
+        max-height: calc(100dvh - 11rem - env(safe-area-inset-bottom));
     }
 
     .modal-footer {
-        padding: 1rem;
+        padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
         gap: 0.65rem;
         flex-direction: column;
     }
@@ -4805,5 +4816,107 @@ body {
     .summary-card,
     .tagihan-summary-cards .tagihan-card {
         align-items: flex-start;
+    }
+}
+
+/* Production mobile hardening for admin/santri dashboards */
+@media (max-width: 820px) {
+    body {
+        overflow-x: hidden;
+    }
+
+    .main-content {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .page-content {
+        padding: 1rem;
+    }
+
+    .topbar {
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .topbar-left,
+    .topbar-right {
+        min-width: 0;
+    }
+
+    .topbar-breadcrumb {
+        max-width: 42vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .admin-actions,
+    .search-filter,
+    .filter-group,
+    .period-controls {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+        gap: 0.75rem;
+    }
+
+    .filter-search,
+    .filter-search input,
+    .admin-actions select,
+    .filter-group select,
+    .period-controls input,
+    .btn-primary,
+    .modal-pay,
+    .modal-cancel {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .data-table {
+        min-width: 720px;
+    }
+
+    .modal-box {
+        width: min(94vw, 680px);
+        max-height: 88vh;
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .welcome-banner,
+    .content-card,
+    .summary-card,
+    .tagihan-card {
+        border-radius: 12px;
+    }
+
+    .welcome-banner {
+        padding: 1rem;
+    }
+
+    .welcome-left h2,
+    .page-header h2 {
+        font-size: 1.25rem;
+        line-height: 1.3;
+    }
+
+    .dashboard-summary-cards,
+    .tagihan-summary-cards,
+    .settings-grid,
+    .admin-section-grid,
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .topbar-profile {
+        display: none;
     }
 }

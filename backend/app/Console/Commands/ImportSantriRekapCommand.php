@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Invoice;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
@@ -10,7 +11,11 @@ use Illuminate\Support\Str;
 
 class ImportSantriRekapCommand extends Command
 {
-    protected $signature = 'santri:import-rekap {file : Path file rekap_santri.xlsx} {--dry-run : Preview tanpa menyimpan}';
+    protected $signature = 'santri:import-rekap
+        {file : Path file rekap_santri.xlsx atau CSV}
+        {--dry-run : Preview tanpa menyimpan}
+        {--replace-demo : Hapus data santri demo lokal yang tidak ada di file}
+        {--with-payment-study-case : Buat skenario tagihan natural untuk beberapa santri di file}';
 
     protected $description = 'Import data santri dari file rekap Excel resmi.';
 
@@ -100,6 +105,10 @@ class ImportSantriRekapCommand extends Command
             return self::SUCCESS;
         }
 
+        if ((bool) $this->option('replace-demo')) {
+            $this->deleteDemoStudentsNotIn($records);
+        }
+
         $created = 0;
         $updated = 0;
 
@@ -109,7 +118,8 @@ class ImportSantriRekapCommand extends Command
                 ->where(function ($query) use ($record) {
                     $query->where('nis', $record['nis'])
                         ->orWhereRaw("REPLACE(nis, ' ', '') = ?", [$record['nis_compact']])
-                        ->orWhere('email', $record['email']);
+                        ->orWhere('email', $record['email'])
+                        ->orWhere('username', $record['username']);
                 })
                 ->first();
 
@@ -131,15 +141,24 @@ class ImportSantriRekapCommand extends Command
                 'username' => $record['username'],
                 'password' => Hash::make($record['plain_password']),
             ]);
-            $user->created_at = Carbon::create($record['entry_year'], 7, 1, 8, 0, 0);
+            $user->created_at = $user->exists && $user->created_at
+                ? $user->created_at
+                : Carbon::create($record['entry_year'], 7, 1, 8, 0, 0);
             $user->updated_at = now();
             $user->save();
+        }
+
+        if ((bool) $this->option('with-payment-study-case')) {
+            $this->syncPaymentStudyCase($records);
         }
 
         $credentialPath = storage_path('app/santri-credentials-' . now()->format('Ymd-His') . '.csv');
         $this->writeCredentials($credentialPath, $records);
 
         $this->info("Import selesai. {$created} dibuat, {$updated} diperbarui.");
+        if ((bool) $this->option('with-payment-study-case')) {
+            $this->info('Study case pembayaran dibuat: 2 invoice lunas, 1 belum bayar, dan 1 tunggakan.');
+        }
         $this->info("File kredensial: {$credentialPath}");
 
         return self::SUCCESS;
@@ -161,23 +180,107 @@ class ImportSantriRekapCommand extends Command
             }
 
             $nisCompact = preg_replace('/\D+/', '', $nis);
-            $entryYear = $this->entryYearFromNis($nisCompact);
+            $entryYear = $this->entryYear((string) ($data['angkatan'] ?? ''), $nisCompact);
+            $username = trim((string) ($data['username'] ?? ''));
+            $password = trim((string) ($data['password'] ?? ''));
 
             $records[] = [
                 'name' => $name,
                 'nis' => $nis,
                 'nis_compact' => $nisCompact,
-                'gender' => $this->inferGender($name),
+                'gender' => $this->normalizeGender((string) ($data['kelamin'] ?? ''), $name),
                 'entry_year' => $entryYear,
-                'tgl_lahir' => $this->parseIndonesianDate((string) ($data['tanggal lahir'] ?? '')),
+                'tgl_lahir' => $this->parseDate((string) ($data['tanggal lahir'] ?? '')),
                 'alamat' => trim((string) ($data['alamat'] ?? '')),
                 'email' => $email,
-                'username' => $this->buildUsername($name, $nisCompact),
-                'plain_password' => 'Jagad' . substr($nisCompact, -3),
+                'username' => $username !== '' ? $username : $this->buildUsername($name, $nisCompact),
+                'plain_password' => $password !== '' ? $password : 'Jagad' . substr($nisCompact, -3),
             ];
         }
 
         return $records;
+    }
+
+    private function deleteDemoStudentsNotIn(array $records): void
+    {
+        $emails = array_column($records, 'email');
+        $nisValues = array_column($records, 'nis');
+        $usernames = array_column($records, 'username');
+
+        User::where('role', 'santri')
+            ->where(function ($query) {
+                $query->where('email', 'like', '%@santri.syajagad.local')
+                    ->orWhere('email', 'like', '%@santri.syajagad.ac.id');
+            })
+            ->whereNotIn('email', $emails)
+            ->whereNotIn('nis', $nisValues)
+            ->whereNotIn('username', $usernames)
+            ->delete();
+    }
+
+    private function syncPaymentStudyCase(array $records): void
+    {
+        $recordsByName = collect($records)->keyBy('name');
+        $cases = [
+            'Abdi Fysabilillah' => [
+                ['due_date' => '2026-01-15', 'status' => 'lunas', 'penalty' => 0, 'payment_method' => 'qris', 'paid_date' => '2026-01-12'],
+                ['due_date' => '2026-07-15', 'status' => 'belum', 'penalty' => 0, 'payment_method' => null, 'paid_date' => null],
+            ],
+            'Elvina Virgawati' => [
+                ['due_date' => '2026-01-15', 'status' => 'lunas', 'penalty' => 0, 'payment_method' => 'bca_va', 'paid_date' => '2026-01-14'],
+            ],
+            'M Sholihul Munir' => [
+                ['due_date' => '2026-01-15', 'status' => 'terlambat', 'penalty' => 250000, 'payment_method' => null, 'paid_date' => null],
+            ],
+        ];
+
+        foreach ($cases as $name => $invoices) {
+            $record = $recordsByName->get($name);
+            if (! $record) {
+                continue;
+            }
+
+            $santri = User::where('role', 'santri')
+                ->where(function ($query) use ($record) {
+                    $query->where('nis', $record['nis'])
+                        ->orWhere('email', $record['email'])
+                        ->orWhere('username', $record['username']);
+                })
+                ->first();
+
+            if (! $santri) {
+                continue;
+            }
+
+            foreach ($invoices as $invoice) {
+                $name = $this->semesterInvoiceName($invoice['due_date']);
+                $amount = 2200000;
+
+                Invoice::updateOrCreate([
+                    'user_id' => $santri->id,
+                    'due_date' => $invoice['due_date'],
+                ], [
+                    'user_id' => $santri->id,
+                    'name' => $name,
+                    'description' => "Pembayaran {$name}",
+                    'due_date' => $invoice['due_date'],
+                    'amount' => $amount,
+                    'penalty' => $invoice['penalty'],
+                    'total' => $amount + $invoice['penalty'],
+                    'status' => $invoice['status'],
+                    'payment_method' => $invoice['payment_method'],
+                    'paid_date' => $invoice['paid_date'],
+                ]);
+            }
+        }
+    }
+
+    private function semesterInvoiceName(string $dueDate): string
+    {
+        $date = Carbon::parse($dueDate);
+        $semester = (int) $date->month === 7 ? 'Ganjil' : 'Genap';
+
+        return "SPP Semester {$semester} {$date->year}";
     }
 
     private function readXlsx(string $file): array
@@ -301,6 +404,29 @@ class ImportSantriRekapCommand extends Command
         return $prefix >= 70 ? 1900 + $prefix : 2000 + $prefix;
     }
 
+    private function entryYear(string $value, string $nisCompact): int
+    {
+        $year = (int) trim($value);
+
+        return $year >= 1900 && $year <= 2100
+            ? $year
+            : $this->entryYearFromNis($nisCompact);
+    }
+
+    private function parseDate(string $date): string
+    {
+        $date = trim($date);
+
+        foreach (['n/j/Y', 'm/d/Y', 'Y-m-d', 'd/m/Y'] as $format) {
+            $parsed = Carbon::createFromFormat($format, $date);
+            if ($parsed !== false) {
+                return $parsed->format('Y-m-d');
+            }
+        }
+
+        return $this->parseIndonesianDate($date);
+    }
+
     private function parseIndonesianDate(string $date): string
     {
         $parts = preg_split('/\s+/', strtolower(trim($date)));
@@ -309,6 +435,17 @@ class ImportSantriRekapCommand extends Command
         }
 
         return Carbon::create((int) $parts[2], self::MONTHS[$parts[1]], (int) $parts[0])->format('Y-m-d');
+    }
+
+    private function normalizeGender(string $gender, string $name): string
+    {
+        $gender = Str::of($gender)->lower()->squish()->value();
+
+        return match ($gender) {
+            'laki-laki', 'laki laki', 'l', 'pria' => 'Laki-laki',
+            'perempuan', 'p', 'wanita' => 'Perempuan',
+            default => $this->inferGender($name),
+        };
     }
 
     private function inferGender(string $name): string

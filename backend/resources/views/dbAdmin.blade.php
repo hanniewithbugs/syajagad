@@ -149,7 +149,7 @@
                     <div class="welcome-left">
                         <div class="welcome-greeting">
                             <span class="greeting-time" id="greetingTime">Selamat Pagi</span>
-                            <span class="greeting-emoji">👨‍💼</span>
+                            <span class="greeting-emoji" aria-hidden="true"><i class="fas fa-user-shield"></i></span>
                         </div>
                         <h2>Selamat Datang, {{ Auth::user()->name }}!</h2>
                         <p>Sistem manajemen santri dan pembayaran SyaJagad berjalan optimal. Pantau performa dan kelola data secara real-time.</p>
@@ -176,7 +176,7 @@
                         <i class="fas fa-users icon"></i>
                         <div class="content">
                             <div class="label">Total Santri</div>
-                            <div class="value" id="totalSantri">120</div>
+                            <div class="value" id="totalSantri">35</div>
                             <div class="sub">Santri Aktif</div>
                         </div>
                     </div>
@@ -184,7 +184,7 @@
                         <i class="fas fa-check-circle icon"></i>
                         <div class="content">
                             <div class="label">Sudah Bayar</div>
-                            <div class="value" id="totalPaid">85</div>
+                            <div class="value" id="totalPaid">0</div>
                             <div class="sub">Santri</div>
                         </div>
                     </div>
@@ -192,7 +192,7 @@
                         <i class="fas fa-clock icon"></i>
                         <div class="content">
                             <div class="label">Belum Bayar</div>
-                            <div class="value" id="totalUnpaid">35</div>
+                            <div class="value" id="totalUnpaid">0</div>
                             <div class="sub">Santri</div>
                         </div>
                     </div>
@@ -200,7 +200,7 @@
                         <i class="fas fa-coins icon"></i>
                         <div class="content">
                             <div class="label">Total Pemasukan</div>
-                            <div class="value" id="totalPemasukan">Rp 42.5M</div>
+                            <div class="value" id="totalPemasukan">Rp 0</div>
                             <div class="sub">Semester ini</div>
                         </div>
                     </div>
@@ -231,7 +231,7 @@
                         <h2><i class="fas fa-chart-bar"></i> Grafik Pembayaran</h2>
                         <canvas id="paymentChart" width="400" height="200"></canvas>
                         <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--gray-600);">
-                            <div>Juli 2024 • Januari 2025 • Juli 2025 • Januari 2026</div>
+                            <div>Juli 2024 &bull; Januari 2025 &bull; Juli 2025 &bull; Januari 2026</div>
                         </div>
                     </div>
                 </div>

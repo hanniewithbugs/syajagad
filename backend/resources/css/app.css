@@ -1,2 +1,2 @@
-/* Vite entrypoint.
-   Main application styles are served from public/css for this project. */
+@import "../../public/css/style.css";
+@import "../../public/css/dbSantri.css";

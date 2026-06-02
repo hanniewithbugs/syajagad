@@ -1,5 +1,13 @@
 <?php
 
+$filesystemDisk = env('FILESYSTEM_DISK', 'local');
+$filesystemDisk = is_string($filesystemDisk) ? strtolower(trim($filesystemDisk)) : $filesystemDisk;
+$supportedFilesystemDisks = ['local', 'public', 's3'];
+
+if (! in_array($filesystemDisk, $supportedFilesystemDisks, true)) {
+    $filesystemDisk = 'local';
+}
+
 return [
 
     /*
@@ -13,7 +21,7 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DISK', 'local'),
+    'default' => $filesystemDisk,
 
     /*
     |--------------------------------------------------------------------------

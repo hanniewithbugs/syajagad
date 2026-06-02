@@ -4,9 +4,19 @@ use Illuminate\Support\Str;
 
 $isVercel = (bool) (env('VERCEL') || env('VERCEL_ENV') || env('VERCEL_URL'));
 $sessionDriver = env('SESSION_DRIVER', 'database');
+$sessionDriver = is_string($sessionDriver) ? strtolower(trim($sessionDriver)) : $sessionDriver;
 
-if ($isVercel && in_array($sessionDriver, ['database', 'file', null, ''], true)) {
+$supportedSessionDrivers = ['file', 'cookie', 'database', 'memcached', 'redis', 'dynamodb', 'array'];
+
+if (
+    $isVercel
+    && in_array($sessionDriver, ['database', 'file', null, '', 'null'], true)
+) {
     $sessionDriver = 'cookie';
+}
+
+if (! in_array($sessionDriver, $supportedSessionDrivers, true)) {
+    $sessionDriver = $isVercel ? 'cookie' : 'database';
 }
 
 return [

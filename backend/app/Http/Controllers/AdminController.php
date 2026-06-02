@@ -27,9 +27,8 @@ class AdminController extends Controller
 
         $totalSantri = User::where('role', 'santri')->count();
         $totalPaid = User::where('role', 'santri')
-            ->whereHas('invoices')
-            ->whereDoesntHave('invoices', function ($query) {
-                $query->whereIn('status', ['belum', 'terlambat']);
+            ->whereHas('invoices', function ($query) {
+                $query->where('status', 'lunas');
             })
             ->count();
         $totalUnpaid = User::where('role', 'santri')
@@ -443,9 +442,9 @@ class AdminController extends Controller
             ->orderBy('name')
             ->get();
 
-        $rows = $santri->flatMap(function (User $student) {
+        $rows = $santri->map(function (User $student) {
             if ($student->invoices->isEmpty()) {
-                return [[
+                return [
                     'id' => 'student-' . $student->id,
                     'student_id' => $student->id,
                     'name' => $student->name,
@@ -461,10 +460,19 @@ class AdminController extends Controller
                     'payment_date' => '-',
                     'total' => 0,
                     'penalty' => 0,
-                ]];
+                ];
             }
 
-            return $student->invoices->map(fn (Invoice $invoice) => [
+            $invoice = $student->invoices
+                ->sortBy(fn (Invoice $invoice) => match ($invoice->status) {
+                    'terlambat' => 0,
+                    'belum' => 1,
+                    'lunas' => 2,
+                    default => 3,
+                })
+                ->first();
+
+            return [
                 'id' => $invoice->id,
                 'student_id' => $student->id,
                 'name' => $student->name,
@@ -480,7 +488,7 @@ class AdminController extends Controller
                 'payment_date' => optional($invoice->paid_date ?? $invoice->updated_at)->format('Y-m-d') ?? '-',
                 'total' => $invoice->total,
                 'penalty' => $invoice->penalty,
-            ]);
+            ];
         })->values();
 
         return response()->json(['data' => $rows]);
