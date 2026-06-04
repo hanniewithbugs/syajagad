@@ -295,7 +295,8 @@
                             <option value="">Semua Status</option>
                             <option value="cuti">Cuti</option>
                             <option value="menunggak">Menunggak</option>
-                            <option value="belum lunas">Belum Lunas</option>
+                            <option value="belum bayar">Belum Bayar</option>
+                            <option value="cicilan">Cicilan</option>
                             <option value="lunas">Lunas</option>
                         </select>
                     </div>
@@ -411,26 +412,35 @@
                 <!-- Report Filters -->
                 <div class="report-filters">
                     <div class="filter-group">
-                        <select>
+                        <select id="reportType">
                             <option>Jenis Laporan</option>
                             <option>Pembayaran Semesteran</option>
                             <option>Pendapatan Tahunan</option>
                             <option>Tunggakan SPP</option>
                         </select>
-                        <select>
-                            <option>Semua Angkatan</option>
-                            <option>2024</option>
-                            <option>2023</option>
+                        <select id="reportAngkatan">
+                            <option value="">Semua Angkatan</option>
+                            <option value="2026">2026</option>
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
                         </select>
-                        <select>
-                            <option>Metode Pembayaran</option>
-                            <option>VA BCA</option>
-                            <option>VA Mandiri</option>
-                            <option>Cash</option>
+                        <select id="reportMethod">
+                            <option value="">Semua Metode</option>
+                            <option value="bca">VA BCA</option>
+                            <option value="mandiri">VA Mandiri</option>
+                            <option value="qris">QRIS</option>
                         </select>
-                        <input type="date">
+                        <select id="reportStatus">
+                            <option value="">Semua Status</option>
+                            <option value="lunas">Lunas</option>
+                            <option value="belum">Belum Bayar</option>
+                            <option value="terlambat">Menunggak</option>
+                            <option value="cicilan">Cicilan</option>
+                        </select>
+                        <input type="date" id="reportStartDate">
                         <span> _ </span>
-                        <input type="date">
+                        <input type="date" id="reportEndDate">
                     </div>
                     <div class="export-buttons">
                         <button class="btn-export" data-format="pdf">
@@ -482,6 +492,35 @@
                         </div>
                         <div class="card-body">
                             <canvas id="demographyChart" width="300" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card full-width report-table-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-table"></i> Data Laporan Pembayaran</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container report-table-wrapper">
+                            <table class="data-table report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nama Santri</th>
+                                        <th>NIS</th>
+                                        <th>Angkatan</th>
+                                        <th>Tagihan</th>
+                                        <th>Pokok</th>
+                                        <th>Denda</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Metode</th>
+                                        <th>Tanggal Bayar</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportTableBody">
+                                    <tr><td colspan="10" class="text-center">Memuat laporan...</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

@@ -56,6 +56,62 @@ body {
     overflow-x: hidden;
 }
 
+html,
+body,
+.main-content,
+.page-content {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.table-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.data-table,
+.payment-table {
+    width: 100%;
+    table-layout: auto;
+}
+
+.report-table-card .card-body {
+    padding-top: 0;
+}
+
+.report-table-wrapper {
+    border: 1px solid #b7d7bf;
+    border-radius: 8px;
+    overflow: auto;
+}
+
+.report-table {
+    border-collapse: collapse;
+    min-width: 980px;
+    background: #ffffff;
+}
+
+.report-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #2f6b35;
+    color: #ffffff;
+    border-color: #245529;
+    white-space: nowrap;
+}
+
+.report-table td {
+    border-color: #d9eadc;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.report-table tbody tr:nth-child(even) {
+    background: #f7fbf8;
+}
+
 /* ===========================
    SIDEBAR
 =========================== */
@@ -2964,6 +3020,164 @@ body {
     border-color: #0f766e;
     color: #0f766e;
     background: #ecfdf5;
+}
+
+.chatbot-options.is-loading {
+    pointer-events: none;
+    opacity: 0.65;
+}
+
+.chatbot-message.error {
+    border-color: rgba(239,68,68,0.35);
+    color: #991b1b;
+}
+
+.payment-detail-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.62);
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+    z-index: 1800;
+}
+
+.payment-detail-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.payment-detail-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: min(440px, 100vw);
+    height: 100vh;
+    background: #ffffff;
+    box-shadow: -16px 0 44px rgba(15, 23, 42, 0.22);
+    transform: translateX(100%);
+    transition: var(--transition);
+    z-index: 1810;
+    display: flex;
+    flex-direction: column;
+}
+
+.payment-detail-panel.active {
+    transform: translateX(0);
+}
+
+.payment-detail-header {
+    background: linear-gradient(135deg, var(--green), var(--green-dark));
+    color: #ffffff;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.payment-detail-header span {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.85;
+}
+
+.payment-detail-header strong {
+    display: block;
+    margin-top: 0.15rem;
+}
+
+.payment-detail-header button {
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.16);
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.payment-detail-body {
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.detail-section,
+.detail-grid > div {
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 0.9rem;
+    margin-bottom: 0.85rem;
+    background: #ffffff;
+}
+
+.detail-title strong {
+    display: block;
+    margin: 0.15rem 0;
+    font-size: 1.05rem;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.detail-grid span,
+.detail-row span,
+.detail-section > span,
+.detail-title small {
+    color: var(--gray-600);
+    font-size: 0.82rem;
+}
+
+.detail-section h4 {
+    margin: 0 0 0.6rem;
+    color: var(--green-dark);
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.detail-row.total {
+    border-bottom: 0;
+    font-size: 1.05rem;
+}
+
+.detail-status.lunas { color: var(--green); }
+.detail-status.terlambat { color: #dc2626; }
+.detail-status.belum,
+.detail-status.cicilan { color: #d97706; }
+
+.detail-actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+}
+
+.detail-actions a,
+.detail-actions button {
+    text-decoration: none;
+    min-height: 40px;
+}
+
+.detail-loading,
+.detail-error {
+    padding: 1rem;
+    border-radius: 8px;
+    background: var(--gray-100);
+    color: var(--gray-700);
+}
+
+.detail-error {
+    background: #fef2f2;
+    color: #991b1b;
 }
 
 /* ===========================

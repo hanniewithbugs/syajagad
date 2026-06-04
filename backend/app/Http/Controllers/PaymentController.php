@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
+require_once __DIR__ . '/../../Support/payment_helpers.php';
+
 class PaymentController extends Controller
 {
     public static function buildPaymentData(User $user): array
@@ -32,18 +34,10 @@ class PaymentController extends Controller
 
         foreach ($invoices as $invoice) {
             $dueDate = Carbon::parse($invoice->due_date);
-            $status = $invoice->status;
-            $penalty = $invoice->penalty;
-
-            if ($status !== 'lunas' && now()->greaterThan($dueDate)) {
-                $lateMonths = self::calculateLateMonths($dueDate);
-                $penalty = max($penalty, $lateMonths * 50000);
-                if ($status === 'belum' && $lateMonths > 0) {
-                    $status = 'terlambat';
-                }
-            }
-
-            $total = $invoice->amount + $penalty;
+            $paymentStatus = getPaymentStatus($invoice);
+            $status = $paymentStatus['status'];
+            $penalty = $paymentStatus['penalty'];
+            $total = $paymentStatus['total'];
 
             if ($invoice->status !== $status || (int) $invoice->penalty !== (int) $penalty || (int) $invoice->total !== (int) $total) {
                 $invoice->update([
@@ -63,9 +57,12 @@ class PaymentController extends Controller
                 'penalty' => $penalty,
                 'total' => $total,
                 'status' => $status,
+                'status_label' => $paymentStatus['label'],
                 'paid_date' => self::formatDate($invoice->paid_date),
                 'paidDate' => self::formatDate($invoice->paid_date),
                 'method' => $invoice->payment_method,
+                'transaction_id' => $invoice->midtrans_transaction_id,
+                'order_id' => $invoice->midtrans_order_id,
             ];
 
             if ($status === 'lunas') {
@@ -217,6 +214,46 @@ class PaymentController extends Controller
         ]);
     }
 
+    public function detail(Invoice $invoice)
+    {
+        if ($invoice->user_id !== Auth::id()) {
+            abort(404);
+        }
+
+        $invoice->load('user');
+        $status = getPaymentStatus($invoice);
+
+        return response()->json([
+            'data' => [
+                'id' => $invoice->id,
+                'name' => $invoice->name,
+                'description' => $invoice->description,
+                'status' => $status['status'],
+                'status_label' => $status['label'],
+                'amount' => (int) $invoice->amount,
+                'penalty' => (int) $status['penalty'],
+                'total' => (int) $status['total'],
+                'due_date' => self::formatDate($invoice->due_date),
+                'paid_date' => self::formatDate($invoice->paid_date),
+                'method' => $invoice->payment_method,
+                'order_id' => $invoice->midtrans_order_id,
+                'transaction_id' => $invoice->midtrans_transaction_id,
+                'updated_at' => optional($invoice->updated_at)->format('Y-m-d H:i'),
+                'student' => [
+                    'name' => $invoice->user?->name,
+                    'nis' => $invoice->user?->nis,
+                    'email' => $invoice->user?->email,
+                    'gender' => $invoice->user?->gender,
+                    'alamat' => $invoice->user?->alamat,
+                ],
+                'proof' => [
+                    'available' => filled($invoice->midtrans_order_id) || $invoice->status === 'lunas',
+                    'label' => filled($invoice->midtrans_order_id) ? $invoice->midtrans_order_id : 'Bukti pembayaran lokal',
+                ],
+            ],
+        ]);
+    }
+
     public function notification(Request $request)
     {
         $payload = $request->all();
@@ -277,14 +314,7 @@ class PaymentController extends Controller
 
     private function currentTotal(Invoice $invoice): int
     {
-        $dueDate = Carbon::parse($invoice->due_date);
-        $penalty = $invoice->penalty;
-
-        if ($invoice->status !== 'lunas' && now()->greaterThan($dueDate)) {
-            $penalty = max($penalty, self::calculateLateMonths($dueDate) * 50000);
-        }
-
-        return (int) $invoice->amount + (int) $penalty;
+        return (int) getPaymentStatus($invoice)['total'];
     }
 
     private static function midtransBaseUrl(): string

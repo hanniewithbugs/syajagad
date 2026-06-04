@@ -290,9 +290,9 @@
                 <div class="filter-bar">
                     <div class="filter-tabs">
                         <button class="filter-tab active" data-filter="semua">Semua</button>
-                        <button class="filter-tab" data-filter="belum">Belum Lunas</button>
+                        <button class="filter-tab" data-filter="belum">Belum Bayar</button>
                         <button class="filter-tab" data-filter="lunas">Lunas</button>
-                        <button class="filter-tab" data-filter="terlambat">Terlambat</button>
+                        <button class="filter-tab" data-filter="terlambat">Menunggak</button>
                     </div>
                     <div class="filter-search">
                         <i class="fas fa-search"></i>
@@ -477,6 +477,23 @@
             </div>
         </div>
     </div>
+
+    <!-- ===== PAYMENT DETAIL PANEL ===== -->
+    <div class="payment-detail-overlay" id="paymentDetailOverlay"></div>
+    <aside class="payment-detail-panel" id="paymentDetailPanel" aria-live="polite">
+        <div class="payment-detail-header">
+            <div>
+                <span>Detail Pembayaran</span>
+                <strong>Rincian Tagihan</strong>
+            </div>
+            <button type="button" id="paymentDetailClose" aria-label="Tutup detail pembayaran">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="payment-detail-body" id="paymentDetailBody">
+            <div class="detail-loading">Memuat detail pembayaran...</div>
+        </div>
+    </aside>
 
     <!-- ===== LOGOUT CONFIRM MODAL ===== -->
     <div class="modal-overlay" id="logoutModal">

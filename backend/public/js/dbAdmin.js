@@ -32,9 +32,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const bankBca = document.getElementById('bankBca');
     const savePeriodBtn = document.getElementById('savePeriodBtn');
     const saveInvoiceBtn = document.getElementById('saveInvoiceBtn');
+    const reportAngkatan = document.getElementById('reportAngkatan');
+    const reportMethod = document.getElementById('reportMethod');
+    const reportStatus = document.getElementById('reportStatus');
+    const reportStartDate = document.getElementById('reportStartDate');
+    const reportEndDate = document.getElementById('reportEndDate');
 
     let santriData = [];
     let paymentData = [];
+    let reportData = [];
     let statsData = {};
     let editingSantriId = null;
     let activeInvoiceSantriId = null;
@@ -43,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         stats: '/admin/stats',
         santri: '/admin/santri',
         payments: '/admin/payments',
+        reports: '/admin/reports',
         auditLogs: '/admin/audit-logs',
         permissions: '/admin/permissions',
     };
@@ -539,6 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
             filterPayments();
             renderRecentPayments(json.data.filter((item) => item.status === 'lunas').slice(0, 5));
             renderCharts(json.data, santriData);
+            fetchReportData();
         } catch (error) {
             console.error(error);
         }
@@ -556,6 +564,59 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         renderPayments(filtered);
+    };
+
+    const reportQuery = () => {
+        const params = new URLSearchParams();
+        if (reportAngkatan?.value) params.set('angkatan', reportAngkatan.value);
+        if (reportMethod?.value) params.set('metode', reportMethod.value);
+        if (reportStatus?.value) params.set('status', reportStatus.value);
+        if (reportStartDate?.value) params.set('start_date', reportStartDate.value);
+        if (reportEndDate?.value) params.set('end_date', reportEndDate.value);
+        return params;
+    };
+
+    const fetchReportData = async () => {
+        const url = new URL(apiRoutes.reports, window.location.origin);
+        const params = reportQuery();
+        params.forEach((value, key) => url.searchParams.set(key, value));
+
+        try {
+            const response = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+            if (!response.ok) throw new Error('Gagal memuat laporan');
+            const json = await response.json();
+            reportData = json.data || [];
+            renderReportTable(reportData);
+        } catch (error) {
+            console.error(error);
+            renderReportTable([]);
+        }
+    };
+
+    const renderReportTable = (rows) => {
+        const container = document.getElementById('reportTableBody');
+        if (!container) return;
+
+        if (!rows.length) {
+            container.innerHTML = '<tr><td colspan="10" class="text-center">Tidak ada data laporan sesuai filter.</td></tr>';
+            return;
+        }
+
+        const statusClass = (label) => `status-badge ${String(label || '').toLowerCase().replace(/\s+/g, '-')}`;
+        container.innerHTML = rows.map((row) => `
+            <tr>
+                <td>${row['Nama Santri'] || '-'}</td>
+                <td>${row['NIS/NIP'] || '-'}</td>
+                <td>${row.Angkatan || '-'}</td>
+                <td>${row.Tagihan || '-'}</td>
+                <td>${formatRupiah(row.Pokok || 0)}</td>
+                <td>${formatRupiah(row.Denda || 0)}</td>
+                <td>${formatRupiah(row.Total || 0)}</td>
+                <td><span class="${statusClass(row.Status)}">${row.Status || '-'}</span></td>
+                <td>${row.Metode || '-'}</td>
+                <td>${row['Tanggal Bayar'] || '-'}</td>
+            </tr>
+        `).join('');
     };
 
     const renderPayments = (list) => {
@@ -1060,8 +1121,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.btn-export[data-format]').forEach((button) => {
         button.addEventListener('click', () => {
             const format = button.dataset.format;
-            window.open(`/admin/reports/export/${format}`, '_blank');
+            const params = reportQuery().toString();
+            window.open(`/admin/reports/export/${format}${params ? `?${params}` : ''}`, '_blank');
         });
+    });
+
+    [reportAngkatan, reportMethod, reportStatus, reportStartDate, reportEndDate].forEach((element) => {
+        element?.addEventListener('change', fetchReportData);
     });
 
     document.querySelectorAll('[data-setting-action]').forEach((button) => {
@@ -1126,7 +1192,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const openSantriEmail = () => {
         const recipients = Array.from(new Set(
             santriData
-                .filter((item) => item.email && (item.payment_status === 'Menunggak' || item.payment_status === 'Belum Lunas'))
+                .filter((item) => item.email && ['Menunggak', 'Belum Bayar', 'Cicilan'].includes(item.payment_status))
                 .map((item) => item.email)
         ));
         const fallback = document.getElementById('institutionEmail')?.value || window.userData?.email || '';

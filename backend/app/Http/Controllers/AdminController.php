@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Carbon;
 
+require_once __DIR__ . '/../../Support/payment_helpers.php';
+
 class AdminController extends Controller
 {
     private const PERMISSIONS = [
@@ -25,22 +27,11 @@ class AdminController extends Controller
     {
         $this->syncOverdueInvoices();
 
-        $totalSantri = User::where('role', 'santri')->count();
-        $totalPaid = User::where('role', 'santri')
-            ->whereHas('invoices', function ($query) {
-                $query->where('status', 'lunas');
-            })
-            ->count();
-        $totalUnpaid = User::where('role', 'santri')
-            ->whereHas('invoices', function ($query) {
-                $query->whereIn('status', ['belum', 'terlambat']);
-            })
-            ->count();
-        $totalTunggak = User::where('role', 'santri')
-            ->whereHas('invoices', function ($query) {
-                $query->where('status', 'terlambat');
-            })
-            ->count();
+        $students = User::where('role', 'santri')->with('invoices')->get();
+        $totalSantri = $students->count();
+        $totalPaid = $students->filter(fn (User $santri) => getPaymentStatus($santri->invoices)['status'] === 'lunas')->count();
+        $totalUnpaid = $students->filter(fn (User $santri) => in_array(getPaymentStatus($santri->invoices)['status'], ['belum', 'terlambat', 'cicilan'], true))->count();
+        $totalTunggak = $students->filter(fn (User $santri) => getPaymentStatus($santri->invoices)['status'] === 'terlambat')->count();
         $totalRevenue = Invoice::where('status', 'lunas')->sum('total');
         $totalTagihan = Invoice::sum('total');
         $totalPenalty = Invoice::sum('penalty');
@@ -54,9 +45,7 @@ class AdminController extends Controller
         $pendingVerificationAmount = Invoice::whereNotNull('midtrans_order_id')
             ->where('status', '!=', 'lunas')
             ->sum('total');
-        $riskRows = User::where('role', 'santri')
-            ->with('invoices')
-            ->get()
+        $riskRows = $students
             ->map(fn (User $santri) => [
                 'id' => $santri->id,
                 'name' => $santri->name,
@@ -130,15 +119,7 @@ class AdminController extends Controller
         ]);
 
         $rows = $santri->map(function ($item) {
-            $paymentStatus = 'Lunas';
-
-            if ($item->overdue_invoices > 0) {
-                $paymentStatus = 'Menunggak';
-            } elseif ($item->unpaid_invoices > 0) {
-                $paymentStatus = 'Belum Lunas';
-            } elseif ($item->total_invoices === 0) {
-                $paymentStatus = 'Belum Ada Tagihan';
-            }
+            $paymentStatus = getPaymentStatus($item->invoices)['label'];
             $risk = $this->buildPaymentRisk($item->invoices);
             $santriStatus = $item->santri_status === 'cuti' ? 'Cuti' : 'Aktif';
 
@@ -236,15 +217,17 @@ class AdminController extends Controller
                 'risk_label' => $risk['risk_label'],
                 'risk_reason' => $risk['risk_reason'],
                 'invoices' => $santri->invoices->map(function ($invoice) {
+                    $status = getPaymentStatus($invoice);
+
                     return [
                         'id' => $invoice->id,
                         'name' => $invoice->name,
-                        'status' => $invoice->status,
-                        'status_label' => $this->invoiceStatusLabel($invoice->status),
+                        'status' => $status['status'],
+                        'status_label' => $status['label'],
                         'due_date' => $this->formatInvoiceDate($invoice->due_date),
                         'amount' => $invoice->amount,
-                        'penalty' => $invoice->penalty,
-                        'total' => $invoice->total,
+                        'penalty' => $status['penalty'],
+                        'total' => $status['total'],
                         'updated_at' => optional($invoice->updated_at)->format('Y-m-d'),
                     ];
                 }),
@@ -314,6 +297,11 @@ class AdminController extends Controller
         }
 
         $penalty = (int) ($validated['penalty'] ?? 0);
+        $paymentStatus = getPaymentStatus((object) [
+            'due_date' => $validated['due_date'],
+            'amount' => $validated['amount'],
+            'penalty' => $penalty,
+        ]);
         $invoiceName = $this->semesterInvoiceName($validated['due_date']);
         $invoice = $santri->invoices()->create([
             'name' => $invoiceName,
@@ -321,8 +309,8 @@ class AdminController extends Controller
             'due_date' => $validated['due_date'],
             'amount' => (int) $validated['amount'],
             'penalty' => $penalty,
-            'total' => (int) $validated['amount'] + $penalty,
-            'status' => now()->toDateString() > $validated['due_date'] ? 'terlambat' : 'belum',
+            'total' => $paymentStatus['total'],
+            'status' => $paymentStatus['status'],
         ]);
 
         $this->notifyUser(
@@ -381,6 +369,12 @@ class AdminController extends Controller
                 return;
             }
 
+            $paymentStatus = getPaymentStatus((object) [
+                'due_date' => $validated['due_date'],
+                'amount' => $validated['amount'],
+                'penalty' => $penalty,
+            ]);
+
             $santri->invoices()->create([
                 'user_id' => $santri->id,
                 'name' => $invoiceName,
@@ -388,8 +382,8 @@ class AdminController extends Controller
                 'due_date' => $validated['due_date'],
                 'amount' => (int) $validated['amount'],
                 'penalty' => $penalty,
-                'total' => (int) $validated['amount'] + $penalty,
-                'status' => now()->toDateString() > $validated['due_date'] ? 'terlambat' : 'belum',
+                'total' => $paymentStatus['total'],
+                'status' => $paymentStatus['status'],
             ]);
 
             $this->notifyUser(
@@ -464,13 +458,15 @@ class AdminController extends Controller
             }
 
             $invoice = $student->invoices
-                ->sortBy(fn (Invoice $invoice) => match ($invoice->status) {
+                ->sortBy(fn (Invoice $invoice) => match (getPaymentStatus($invoice)['status']) {
                     'terlambat' => 0,
-                    'belum' => 1,
-                    'lunas' => 2,
+                    'cicilan' => 1,
+                    'belum' => 2,
+                    'lunas' => 3,
                     default => 3,
                 })
                 ->first();
+            $status = getPaymentStatus($invoice);
 
             return [
                 'id' => $invoice->id,
@@ -483,8 +479,8 @@ class AdminController extends Controller
                 'student_status_label' => $student->santri_status === 'cuti' ? 'Cuti' : 'Aktif',
                 'payment_status' => $this->studentPaymentStatus($student),
                 'month' => $invoice->name,
-                'status' => $invoice->status,
-                'status_label' => $this->invoiceStatusLabel($invoice->status),
+                'status' => $status['status'],
+                'status_label' => $status['label'],
                 'payment_date' => optional($invoice->paid_date ?? $invoice->updated_at)->format('Y-m-d') ?? '-',
                 'total' => $invoice->total,
                 'penalty' => $invoice->penalty,
@@ -494,11 +490,11 @@ class AdminController extends Controller
         return response()->json(['data' => $rows]);
     }
 
-    public function exportReport(string $format)
+    public function exportReport(Request $request, string $format)
     {
         abort_unless(in_array($format, ['csv', 'excel', 'pdf'], true), 404);
 
-        $rows = $this->paymentReportRows();
+        $rows = $this->paymentReportRows($request);
         $filename = 'laporan-syajagad-' . now()->format('Ymd-His');
 
         if ($format === 'pdf') {
@@ -508,7 +504,7 @@ class AdminController extends Controller
         }
 
         if ($format === 'excel') {
-            return response($this->tableExportContent($rows, "\t"))
+            return response($this->excelReportHtml($rows))
                 ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
                 ->header('Content-Disposition', "attachment; filename=\"{$filename}.xls\"");
         }
@@ -516,6 +512,11 @@ class AdminController extends Controller
         return response($this->tableExportContent($rows, ','))
             ->header('Content-Type', 'text/csv; charset=UTF-8')
             ->header('Content-Disposition', "attachment; filename=\"{$filename}.csv\"");
+    }
+
+    public function reportData(Request $request): \Illuminate\Http\JsonResponse
+    {
+        return response()->json(['data' => $this->paymentReportRows($request)]);
     }
 
     public function changePassword(Request $request): \Illuminate\Http\JsonResponse
@@ -661,21 +662,14 @@ class AdminController extends Controller
     private function syncOverdueInvoices(): void
     {
         Invoice::where('status', '!=', 'lunas')
-            ->whereDate('due_date', '<', now()->toDateString())
             ->get()
             ->each(function (Invoice $invoice) {
-                $dueDate = $this->parseInvoiceDate($invoice->due_date);
-                if (! $dueDate) {
-                    return;
-                }
-
-                $lateMonths = $this->calculateLateMonths($dueDate);
-                $penalty = max((int) $invoice->penalty, $lateMonths * 50000);
+                $status = getPaymentStatus($invoice);
 
                 $invoice->update([
-                    'status' => 'terlambat',
-                    'penalty' => $penalty,
-                    'total' => (int) $invoice->amount + $penalty,
+                    'status' => $status['status'],
+                    'penalty' => $status['penalty'],
+                    'total' => $status['total'],
                 ]);
             });
     }
@@ -701,19 +695,7 @@ class AdminController extends Controller
             $santri->load('invoices');
         }
 
-        if ($santri->invoices->isEmpty()) {
-            return 'Belum Ada Tagihan';
-        }
-
-        if ($santri->invoices->where('status', 'terlambat')->isNotEmpty()) {
-            return 'Menunggak';
-        }
-
-        if ($santri->invoices->where('status', 'belum')->isNotEmpty()) {
-            return 'Belum Lunas';
-        }
-
-        return 'Lunas';
+        return getPaymentStatus($santri->invoices)['label'];
     }
 
     private function invoiceStatusLabel(string $status): string
@@ -721,6 +703,7 @@ class AdminController extends Controller
         return match ($status) {
             'lunas' => 'Lunas',
             'terlambat' => 'Menunggak',
+            'cicilan' => 'Cicilan',
             'no_invoice' => 'Belum Ada Tagihan',
             default => 'Belum Bayar',
         };
@@ -796,27 +779,51 @@ class AdminController extends Controller
         return 'Rp ' . number_format($amount, 0, ',', '.');
     }
 
-    private function paymentReportRows(): array
+    private function paymentReportRows(Request $request): array
     {
         $this->syncOverdueInvoices();
 
-        return Invoice::with('user')
-            ->orderByDesc('updated_at')
-            ->get()
-            ->map(fn (Invoice $invoice) => [
+        $query = Invoice::with('user')->orderBy('user_id')->orderByDesc('due_date');
+
+        if ($request->filled('angkatan')) {
+            $query->whereHas('user', fn ($userQuery) => $userQuery->whereYear('created_at', (string) $request->string('angkatan')));
+        }
+
+        if ($request->filled('metode')) {
+            $query->where('payment_method', (string) $request->string('metode'));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', (string) $request->string('status'));
+        }
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('due_date', '>=', $request->date('start_date')->format('Y-m-d'));
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('due_date', '<=', $request->date('end_date')->format('Y-m-d'));
+        }
+
+        return $query->get()
+            ->map(function (Invoice $invoice) {
+                $status = getPaymentStatus($invoice);
+
+                return [
                 'Nama Santri' => $invoice->user?->name ?? '-',
                 'NIS/NIP' => $invoice->user?->nis ?? '-',
                 'Kelamin' => $invoice->user?->gender ?? '-',
                 'Angkatan' => optional($invoice->user?->created_at)->format('Y') ?? '-',
                 'Tagihan' => $invoice->name,
                 'Pokok' => $invoice->amount,
-                'Denda' => $invoice->penalty,
-                'Total' => $invoice->total,
-                'Status' => $this->invoiceStatusLabel($invoice->status),
+                'Denda' => $status['penalty'],
+                'Total' => $status['total'],
+                'Status' => $status['label'],
                 'Metode' => $invoice->payment_method ?? '-',
                 'Tanggal Bayar' => $this->formatInvoiceDate($invoice->paid_date) ?? '-',
                 'Update Terakhir' => optional($invoice->updated_at)->format('Y-m-d H:i'),
-            ])
+            ];
+            })
             ->values()
             ->all();
     }
@@ -846,17 +853,82 @@ class AdminController extends Controller
         }, $values));
     }
 
-    private function printableReportHtml(array $rows): string
+    private function excelReportHtml(array $rows): string
     {
-        $revenue = Invoice::where('status', 'lunas')->sum('total');
-        $outstanding = Invoice::whereIn('status', ['belum', 'terlambat'])->sum('total');
-        $generatedAt = now()->format('d/m/Y H:i');
-        $rowCount = count($rows);
-        $bodyRows = collect($rows)->map(function (array $row) {
-            $cells = collect($row)->map(fn ($value) => '<td>' . e((string) $value) . '</td>')->implode('');
+        $headers = ['Nama Santri', 'NIS/NIP', 'Kelamin', 'Angkatan', 'Tagihan', 'Pokok', 'Denda', 'Total', 'Status', 'Metode', 'Tanggal Bayar', 'Update Terakhir'];
+        $headerCells = collect($headers)->map(fn ($header) => '<th>' . e($header) . '</th>')->implode('');
+        $bodyRows = collect($rows)->map(function (array $row) use ($headers) {
+            $cells = collect($headers)->map(function ($header) use ($row) {
+                $value = in_array($header, ['Pokok', 'Denda', 'Total'], true)
+                    ? $this->formatRupiah((int) ($row[$header] ?? 0))
+                    : ($row[$header] ?? '');
+
+                return '<td>' . e((string) $value) . '</td>';
+            })->implode('');
 
             return "<tr>{$cells}</tr>";
         })->implode('');
+
+        return "\xEF\xBB\xBF" . <<<HTML
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th { background: #2f6b35; color: #ffffff; font-weight: 700; }
+        th, td { border: 1px solid #b7d7bf; padding: 8px; white-space: nowrap; }
+        td:nth-child(6), td:nth-child(7), td:nth-child(8) { mso-number-format:"\@"; }
+    </style>
+</head>
+<body>
+    <table>
+        <thead><tr>{$headerCells}</tr></thead>
+        <tbody>{$bodyRows}</tbody>
+    </table>
+</body>
+</html>
+HTML;
+    }
+
+    private function printableReportHtml(array $rows): string
+    {
+        $revenue = collect($rows)->where('Status', 'Lunas')->sum('Total');
+        $outstanding = collect($rows)->whereIn('Status', ['Belum Bayar', 'Menunggak', 'Cicilan'])->sum('Total');
+        $generatedAt = now()->format('d/m/Y H:i');
+        $rowCount = count($rows);
+        $studentBlocks = collect($rows)
+            ->groupBy('NIS/NIP')
+            ->map(function ($studentRows) {
+                $first = $studentRows->first();
+                $bodyRows = $studentRows->map(function (array $row) {
+                    $cells = collect(['Tagihan', 'Pokok', 'Denda', 'Total', 'Status', 'Metode', 'Tanggal Bayar'])
+                        ->map(function ($header) use ($row) {
+                            $value = in_array($header, ['Pokok', 'Denda', 'Total'], true)
+                                ? $this->formatRupiah((int) ($row[$header] ?? 0))
+                                : ($row[$header] ?? '');
+
+                            return '<td>' . e((string) $value) . '</td>';
+                        })
+                        ->implode('');
+
+                    return "<tr>{$cells}</tr>";
+                })->implode('');
+
+                return <<<HTML
+    <section class="student-block">
+        <div class="student-head">
+            <strong>{$this->escapeHtml($first['Nama Santri'])}</strong>
+            <span>NIS {$this->escapeHtml($first['NIS/NIP'])} | {$this->escapeHtml($first['Kelamin'])} | Angkatan {$this->escapeHtml($first['Angkatan'])}</span>
+        </div>
+        <table>
+            <thead>
+                <tr><th>Tagihan</th><th>Pokok</th><th>Denda</th><th>Total</th><th>Status</th><th>Metode</th><th>Tanggal Bayar</th></tr>
+            </thead>
+            <tbody>{$bodyRows}</tbody>
+        </table>
+    </section>
+HTML;
+            })->implode('');
 
         return <<<HTML
 <!DOCTYPE html>
@@ -865,16 +937,20 @@ class AdminController extends Controller
     <meta charset="UTF-8">
     <title>Laporan SyaJagad</title>
     <style>
-        body { font-family: Arial, sans-serif; color: #1f2937; margin: 28px; }
-        h1 { margin: 0 0 4px; }
+        @page { size: A4 portrait; margin: 14mm; }
+        body { font-family: Arial, sans-serif; color: #1f2937; margin: 0; }
+        h1 { color: #2f6b35; margin: 0 0 4px; }
         .meta { color: #64748b; margin-bottom: 20px; }
-        .summary { display: flex; gap: 12px; margin-bottom: 20px; }
-        .box { border: 1px solid #dbe3ef; border-radius: 8px; padding: 10px 14px; }
+        .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .box { border: 1px solid #b7d7bf; border-radius: 6px; padding: 10px 14px; background: #f3fbf4; }
         .box strong { display: block; font-size: 18px; margin-top: 4px; }
+        .student-block { page-break-inside: avoid; break-inside: avoid; margin: 0 0 16px; border: 1px solid #b7d7bf; border-radius: 6px; overflow: hidden; }
+        .student-head { background: #2f6b35; color: #fff; padding: 10px 12px; display: flex; justify-content: space-between; gap: 12px; }
+        .student-head span { font-size: 12px; }
         table { border-collapse: collapse; width: 100%; font-size: 12px; }
         th, td { border: 1px solid #dbe3ef; padding: 7px; text-align: left; }
-        th { background: #f8fafc; }
-        @media print { body { margin: 16px; } .no-print { display: none; } }
+        th { background: #e8f5ea; color: #214d27; }
+        @media print { .no-print { display: none; } }
     </style>
 </head>
 <body>
@@ -886,16 +962,14 @@ class AdminController extends Controller
         <div class="box">Outstanding<strong>{$this->formatRupiah((int) $outstanding)}</strong></div>
         <div class="box">Jumlah Baris<strong>{$rowCount}</strong></div>
     </div>
-    <table>
-        <thead>
-            <tr>
-                <th>Nama Santri</th><th>NIS/NIP</th><th>Kelamin</th><th>Angkatan</th><th>Tagihan</th><th>Pokok</th><th>Denda</th><th>Total</th><th>Status</th><th>Metode</th><th>Tanggal Bayar</th><th>Update Terakhir</th>
-            </tr>
-        </thead>
-        <tbody>{$bodyRows}</tbody>
-    </table>
+    {$studentBlocks}
 </body>
 </html>
 HTML;
+    }
+
+    private function escapeHtml(mixed $value): string
+    {
+        return e((string) $value);
     }
 }

@@ -40,6 +40,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/admin/santri/{santri}/invoices', [AdminController::class, 'storeInvoice']);
     Route::post('/admin/invoices/bulk', [AdminController::class, 'storeBulkInvoice']);
     Route::get('/admin/payments', [AdminController::class, 'listPayments']);
+    Route::get('/admin/reports', [AdminController::class, 'reportData']);
     Route::get('/admin/reports/export/{format}', [AdminController::class, 'exportReport']);
     Route::get('/admin/audit-logs', [AdminController::class, 'listAuditLogs']);
     Route::get('/admin/permissions', [AdminController::class, 'listPermissions']);
@@ -59,6 +60,7 @@ Route::middleware(['auth', 'role:santri'])->group(function () {
     Route::post('/payment/checkout', [PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::post('/payment/confirm', [PaymentController::class, 'confirm'])->name('payment.confirm');
     Route::get('/payment/status/{invoice}', [PaymentController::class, 'status'])->name('payment.status');
+    Route::get('/payment/detail/{invoice}', [PaymentController::class, 'detail'])->name('payment.detail');
 });
 
 Route::post('/payment/notification', [PaymentController::class, 'notification'])

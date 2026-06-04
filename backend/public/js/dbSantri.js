@@ -34,6 +34,8 @@ class SyaJagadDashboard {
         this.notifications = [];
         this.currentTagihanFilter = 'semua';
         this.currentTagihanSearch = '';
+        this.chatStorageKey = `syajagad-chat-${this.userData.nis || this.userData.username || 'santri'}`;
+        this.chatbotBusy = false;
 
         this.init();
     }
@@ -135,6 +137,13 @@ class SyaJagadDashboard {
 
         document.getElementById('tagihanList')?.addEventListener('click', (e) => {
             const payButton = e.target.closest('.tc-pay-btn[data-invoice-id]');
+            const detailButton = e.target.closest('.tc-detail-btn[data-invoice-id]');
+
+            if (detailButton) {
+                this.openPaymentDetail(Number(detailButton.dataset.invoiceId));
+                return;
+            }
+
             if (!payButton) return;
 
             const invoiceId = Number(payButton.dataset.invoiceId);
@@ -194,6 +203,8 @@ class SyaJagadDashboard {
                 e.target.closest('.modal-overlay').classList.remove('active');
             });
         });
+        document.getElementById('paymentDetailClose')?.addEventListener('click', () => this.closePaymentDetail());
+        document.getElementById('paymentDetailOverlay')?.addEventListener('click', () => this.closePaymentDetail());
 
         // Logout confirm
         document.getElementById('confirmLogout').addEventListener('click', () => {
@@ -437,7 +448,7 @@ class SyaJagadDashboard {
         if (isUnpaid) {
             headerContent += `<span>Jatuh tempo: ${this.getDueDate(tagihan)}</span>`;
         } else {
-            headerContent += `<span>${this.getPaidDate(tagihan) || 'Dibayar'} ${tagihan.status === 'terlambat' ? '(Terlambat)' : ''}</span>`;
+            headerContent += `<span>${this.getPaidDate(tagihan) || 'Dibayar'} ${tagihan.status === 'terlambat' ? '(Menunggak)' : ''}</span>`;
         }
         headerContent += `</div>`;
 
@@ -461,7 +472,7 @@ class SyaJagadDashboard {
                     <i class="fas fa-receipt"></i>
                     <span>TRX-${tagihan.id.toString().padStart(4, '0')}</span>
                 </div>
-                <button class="tc-detail-btn">
+                <button class="tc-detail-btn" data-invoice-id="${tagihan.id}">
                     <i class="fas fa-eye"></i> Lihat Detail
                 </button>
             `;
@@ -521,7 +532,7 @@ class SyaJagadDashboard {
                 </div>
                 <div class="tx-right">
                     <span class="tx-amount">${this.formatRupiah(tx.amount)}</span>
-                    <span class="tx-status ${tx.status}">${tx.status === 'terlambat' ? 'Terlambat' : 'Lunas'}</span>
+                    <span class="tx-status ${tx.status}">${tx.status === 'terlambat' ? 'Menunggak' : 'Lunas'}</span>
                 </div>
             </div>
         `).join('');
@@ -545,6 +556,83 @@ class SyaJagadDashboard {
         document.getElementById('modalTagihanPenalty').textContent = this.formatRupiah(tagihan.penalty || 0);
         document.getElementById('modalTagihanTotal').textContent = this.formatRupiah(tagihan.total);
         document.getElementById('paymentModal').classList.add('active');
+    }
+
+    async openPaymentDetail(invoiceId) {
+        const panel = document.getElementById('paymentDetailPanel');
+        const overlay = document.getElementById('paymentDetailOverlay');
+        const body = document.getElementById('paymentDetailBody');
+        if (!panel || !overlay || !body) return;
+
+        panel.classList.add('active');
+        overlay.classList.add('active');
+        body.innerHTML = '<div class="detail-loading">Memuat detail pembayaran...</div>';
+
+        try {
+            const response = await fetch(`/payment/detail/${invoiceId}`, { headers: { Accept: 'application/json' } });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'Detail pembayaran tidak ditemukan.');
+
+            this.renderPaymentDetail(result.data);
+        } catch (error) {
+            body.innerHTML = `<div class="detail-error">${error.message || 'Gagal memuat detail pembayaran.'}</div>`;
+        }
+    }
+
+    closePaymentDetail() {
+        document.getElementById('paymentDetailPanel')?.classList.remove('active');
+        document.getElementById('paymentDetailOverlay')?.classList.remove('active');
+    }
+
+    renderPaymentDetail(detail) {
+        const body = document.getElementById('paymentDetailBody');
+        if (!body) return;
+
+        const receiptText = [
+            'BUKTI PEMBAYARAN SYAJAGAD',
+            `Nama Tagihan: ${detail.name || '-'}`,
+            `No Transaksi: ${detail.order_id || detail.transaction_id || `TRX-${String(detail.id).padStart(4, '0')}`}`,
+            `Status: ${detail.status_label || '-'}`,
+            `Santri: ${detail.student?.name || '-'} (${detail.student?.nis || '-'})`,
+            `Total: ${this.formatRupiah(detail.total || 0)}`,
+        ].join('\n');
+        const receiptUrl = `data:text/plain;charset=utf-8,${encodeURIComponent(receiptText)}`;
+
+        body.innerHTML = `
+            <div class="detail-section detail-title">
+                <span>Nama Tagihan</span>
+                <strong>${detail.name || '-'}</strong>
+                <small>${detail.description || '-'}</small>
+            </div>
+            <div class="detail-grid">
+                <div><span>Nomor Transaksi</span><strong>${detail.order_id || detail.transaction_id || `TRX-${String(detail.id).padStart(4, '0')}`}</strong></div>
+                <div><span>Status</span><strong class="detail-status ${detail.status}">${detail.status_label || '-'}</strong></div>
+            </div>
+            <div class="detail-section">
+                <h4>Data Santri</h4>
+                <p>${detail.student?.name || '-'}<br>NIS ${detail.student?.nis || '-'}<br>${detail.student?.email || '-'}</p>
+            </div>
+            <div class="detail-section">
+                <h4>Rincian Pembayaran</h4>
+                <div class="detail-row"><span>Pokok</span><strong>${this.formatRupiah(detail.amount || 0)}</strong></div>
+                <div class="detail-row"><span>Denda</span><strong>${this.formatRupiah(detail.penalty || 0)}</strong></div>
+                <div class="detail-row total"><span>Total</span><strong>${this.formatRupiah(detail.total || 0)}</strong></div>
+            </div>
+            <div class="detail-section">
+                <h4>Informasi Transaksi</h4>
+                <p>Metode: ${detail.method || '-'}<br>Jatuh tempo: ${detail.due_date || '-'}<br>Tanggal bayar: ${detail.paid_date || '-'}<br>Update: ${detail.updated_at || '-'}</p>
+            </div>
+            <div class="detail-section">
+                <h4>Bukti Pembayaran</h4>
+                <p>${detail.proof?.available ? detail.proof.label : 'Bukti belum tersedia karena pembayaran belum lunas.'}</p>
+                <div class="detail-actions">
+                    <a class="modal-pay" href="${receiptUrl}" download="bukti-${detail.id}.txt"><i class="fas fa-download"></i> Download Bukti</a>
+                    <button class="modal-cancel" type="button" id="printPaymentDetail"><i class="fas fa-print"></i> Cetak Detail</button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('printPaymentDetail')?.addEventListener('click', () => window.print());
     }
 
     updatePaymentMethodDetails() {
@@ -614,6 +702,7 @@ class SyaJagadDashboard {
         shell.classList.toggle('active', shouldOpen);
 
         if (shouldOpen) {
+            this.restoreChatbotMessages();
             setTimeout(() => {
                 const body = document.getElementById('chatbotMessages');
                 if (body) body.scrollTop = body.scrollHeight;
@@ -621,7 +710,7 @@ class SyaJagadDashboard {
         }
     }
 
-    appendChatMessage(role, message, extraClass = '') {
+    appendChatMessage(role, message, extraClass = '', persist = true) {
         const body = document.getElementById('chatbotMessages');
         if (!body) return null;
 
@@ -639,6 +728,9 @@ class SyaJagadDashboard {
 
         body.appendChild(bubble);
         body.scrollTop = body.scrollHeight;
+        if (persist && !extraClass.includes('loading')) {
+            this.persistChatbotMessage(role, message);
+        }
 
         return bubble;
     }
@@ -648,13 +740,17 @@ class SyaJagadDashboard {
         if (!body) return;
 
         body.innerHTML = '';
+        localStorage.removeItem(this.chatStorageKey);
         this.appendChatMessage('bot', 'Riwayat pesan sudah dibersihkan. Pilih menu cepat untuk mulai lagi.');
     }
 
     async askChatbot(intent, label) {
+        if (this.chatbotBusy) return;
+        this.chatbotBusy = true;
         this.toggleChatbot(true);
         this.appendChatMessage('user', label);
         const loadingBubble = this.appendChatMessage('bot', 'Sebentar, saya cek data tagihan kamu...', 'loading');
+        document.getElementById('chatbotOptions')?.classList.add('is-loading');
 
         try {
             const response = await fetch('/chatbot/quick', {
@@ -676,8 +772,32 @@ class SyaJagadDashboard {
             this.appendChatMessage('bot', result.data?.message || 'Data berhasil dicek, tetapi belum ada pesan yang bisa ditampilkan.');
         } catch (error) {
             loadingBubble?.remove();
-            this.appendChatMessage('bot', error.message || 'Asisten sedang tidak tersedia. Silakan coba lagi.');
+            this.appendChatMessage('bot', error.message || 'Asisten sedang tidak tersedia. Silakan coba lagi.', 'error');
+        } finally {
+            this.chatbotBusy = false;
+            document.getElementById('chatbotOptions')?.classList.remove('is-loading');
         }
+    }
+
+    persistChatbotMessage(role, message) {
+        const saved = JSON.parse(localStorage.getItem(this.chatStorageKey) || '[]');
+        saved.push({ role, message, time: Date.now() });
+        localStorage.setItem(this.chatStorageKey, JSON.stringify(saved.slice(-30)));
+    }
+
+    restoreChatbotMessages() {
+        const body = document.getElementById('chatbotMessages');
+        if (!body || body.dataset.restored === 'true') return;
+
+        const saved = JSON.parse(localStorage.getItem(this.chatStorageKey) || '[]');
+        if (!saved.length) {
+            body.dataset.restored = 'true';
+            return;
+        }
+
+        body.innerHTML = '';
+        saved.forEach((item) => this.appendChatMessage(item.role, item.message, '', false));
+        body.dataset.restored = 'true';
     }
 
     submitPayment() {
@@ -870,8 +990,9 @@ class SyaJagadDashboard {
 
     getStatusLabel(status) {
         if (status === 'lunas') return 'Lunas';
-        if (status === 'terlambat') return 'Terlambat';
-        return 'Belum Lunas';
+        if (status === 'terlambat') return 'Menunggak';
+        if (status === 'cicilan') return 'Cicilan';
+        return 'Belum Bayar';
     }
 
     getBillingPeriod(tagihan) {
