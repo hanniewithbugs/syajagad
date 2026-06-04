@@ -293,11 +293,8 @@
                         </div>
                         <select id="filterStatus">
                             <option value="">Semua Status</option>
+                            <option value="aktif">Aktif</option>
                             <option value="cuti">Cuti</option>
-                            <option value="menunggak">Menunggak</option>
-                            <option value="belum bayar">Belum Bayar</option>
-                            <option value="cicilan">Cicilan</option>
-                            <option value="lunas">Lunas</option>
                         </select>
                     </div>
                     <button class="btn-primary" id="addSantriBtn">

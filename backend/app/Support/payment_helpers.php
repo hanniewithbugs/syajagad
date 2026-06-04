@@ -40,14 +40,14 @@ if (! function_exists('getPaymentStatus')) {
 
         $penalty = $currentPenalty;
         if ($rawStatus !== 'lunas' && $dueDate && now()->greaterThan($dueDate)) {
-            $months = $dueDate->diffInMonths(now());
+            $months = (int) $dueDate->diffInMonths(now());
             if (now()->day > $dueDate->day) {
                 $months++;
             }
-            $penalty = max($penalty, max(1, $months) * 50000);
+            $penalty = (int) max($penalty, max(1, $months) * 50000);
         }
 
-        $total = $amount + $penalty;
+        $total = (int) ($amount + $penalty);
         $status = match (true) {
             $rawStatus === 'lunas' => 'lunas',
             $rawStatus === 'cicilan' || ($paidAmount > 0 && $paidAmount < $total) => 'cicilan',
@@ -66,5 +66,72 @@ if (! function_exists('getPaymentStatus')) {
             'penalty' => $penalty,
             'total' => $total,
         ];
+    }
+}
+
+if (! function_exists('paymentMetricsForInvoice')) {
+    function paymentMetricsForInvoice(mixed $invoice): array
+    {
+        $status = getPaymentStatus($invoice);
+        $amount = (int) ($invoice->amount ?? 0);
+        $penalty = (int) ($status['penalty'] ?? ($invoice->penalty ?? 0));
+        $total = (int) ($status['total'] ?? ($amount + $penalty));
+        $paidAmount = (int) ($invoice->paid_amount ?? 0);
+
+        if ($status['status'] === 'lunas') {
+            $paidAmount = $total;
+        }
+
+        $outstanding = max($total - $paidAmount, 0);
+
+        return [
+            'status' => $status['status'],
+            'label' => $status['label'],
+            'amount' => $amount,
+            'penalty' => $penalty,
+            'total' => $total,
+            'paid' => $paidAmount,
+            'outstanding' => $outstanding,
+        ];
+    }
+}
+
+if (! function_exists('summarizePaymentCollection')) {
+    function summarizePaymentCollection(Collection $invoices): array
+    {
+        $distribution = [
+            'lunas' => 0,
+            'belum' => 0,
+            'terlambat' => 0,
+            'cicilan' => 0,
+        ];
+
+        $summary = [
+            'total_invoices' => $invoices->count(),
+            'total_tagihan' => 0,
+            'total_pembayaran' => 0,
+            'total_denda' => 0,
+            'outstanding' => 0,
+            'overdue_amount' => 0,
+            'distribution' => $distribution,
+        ];
+
+        foreach ($invoices as $invoice) {
+            $metrics = paymentMetricsForInvoice($invoice);
+            $summary['total_tagihan'] += $metrics['total'];
+            $summary['total_pembayaran'] += $metrics['paid'];
+            $summary['total_denda'] += $metrics['penalty'];
+            $summary['outstanding'] += $metrics['outstanding'];
+
+            if (array_key_exists($metrics['status'], $summary['distribution'])) {
+                $summary['distribution'][$metrics['status']]++;
+            }
+
+            if ($metrics['status'] === 'terlambat') {
+                $summary['overdue_amount'] += $metrics['outstanding'];
+            }
+        }
+
+        return $summary;
     }
 }

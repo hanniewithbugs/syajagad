@@ -588,15 +588,29 @@ class SyaJagadDashboard {
         const body = document.getElementById('paymentDetailBody');
         if (!body) return;
 
-        const receiptText = [
-            'BUKTI PEMBAYARAN SYAJAGAD',
-            `Nama Tagihan: ${detail.name || '-'}`,
-            `No Transaksi: ${detail.order_id || detail.transaction_id || `TRX-${String(detail.id).padStart(4, '0')}`}`,
-            `Status: ${detail.status_label || '-'}`,
-            `Santri: ${detail.student?.name || '-'} (${detail.student?.nis || '-'})`,
-            `Total: ${this.formatRupiah(detail.total || 0)}`,
-        ].join('\n');
-        const receiptUrl = `data:text/plain;charset=utf-8,${encodeURIComponent(receiptText)}`;
+        const transactionNumber = detail.order_id || detail.transaction_id || `TRX-${String(detail.id).padStart(4, '0')}`;
+        const proofUrl = detail.proof?.is_image && detail.proof?.url ? detail.proof.url : '';
+        const proofFilename = detail.proof?.filename || `bukti-pembayaran-${detail.id}.jpg`;
+        const proofBlock = proofUrl
+            ? `
+                <div class="proof-preview">
+                    <img src="${proofUrl}" alt="Bukti pembayaran ${detail.name || ''}" loading="lazy">
+                </div>
+                <div class="detail-actions">
+                    <a class="modal-cancel" href="${proofUrl}" target="_blank" rel="noopener"><i class="fas fa-eye"></i> Lihat Bukti</a>
+                    <a class="modal-pay" href="${proofUrl}" download="${proofFilename}"><i class="fas fa-download"></i> Download Gambar</a>
+                    <button class="modal-cancel" type="button" id="printPaymentDetail"><i class="fas fa-print"></i> Cetak Detail</button>
+                </div>
+            `
+            : `
+                <div class="proof-empty">
+                    <i class="fas fa-image"></i>
+                    <span>Bukti pembayaran belum tersedia.</span>
+                </div>
+                <div class="detail-actions">
+                    <button class="modal-cancel" type="button" id="printPaymentDetail"><i class="fas fa-print"></i> Cetak Detail</button>
+                </div>
+            `;
 
         body.innerHTML = `
             <div class="detail-section detail-title">
@@ -605,30 +619,41 @@ class SyaJagadDashboard {
                 <small>${detail.description || '-'}</small>
             </div>
             <div class="detail-grid">
-                <div><span>Nomor Transaksi</span><strong>${detail.order_id || detail.transaction_id || `TRX-${String(detail.id).padStart(4, '0')}`}</strong></div>
+                <div><span>Nomor Transaksi</span><strong>${transactionNumber}</strong></div>
                 <div><span>Status</span><strong class="detail-status ${detail.status}">${detail.status_label || '-'}</strong></div>
             </div>
             <div class="detail-section">
                 <h4>Data Santri</h4>
-                <p>${detail.student?.name || '-'}<br>NIS ${detail.student?.nis || '-'}<br>${detail.student?.email || '-'}</p>
+                <div class="detail-row"><span>Nama</span><strong>${detail.student?.name || '-'}</strong></div>
+                <div class="detail-row"><span>NIS</span><strong>${detail.student?.nis || '-'}</strong></div>
+                <div class="detail-row"><span>Email</span><strong>${detail.student?.email || '-'}</strong></div>
+                <div class="detail-row"><span>Jenis Kelamin</span><strong>${detail.student?.gender || '-'}</strong></div>
             </div>
             <div class="detail-section">
-                <h4>Rincian Pembayaran</h4>
+                <h4>Informasi Tagihan</h4>
+                <div class="detail-row"><span>Jatuh Tempo</span><strong>${detail.due_date || '-'}</strong></div>
+                <div class="detail-row"><span>Deskripsi</span><strong>${detail.description || '-'}</strong></div>
                 <div class="detail-row"><span>Pokok</span><strong>${this.formatRupiah(detail.amount || 0)}</strong></div>
                 <div class="detail-row"><span>Denda</span><strong>${this.formatRupiah(detail.penalty || 0)}</strong></div>
                 <div class="detail-row total"><span>Total</span><strong>${this.formatRupiah(detail.total || 0)}</strong></div>
             </div>
             <div class="detail-section">
+                <h4>Ringkasan Pembayaran</h4>
+                <div class="detail-row"><span>Sudah Dibayar</span><strong>${this.formatRupiah(detail.paid_amount || 0)}</strong></div>
+                <div class="detail-row"><span>Outstanding</span><strong>${this.formatRupiah(detail.outstanding || 0)}</strong></div>
+                <div class="detail-row"><span>Status</span><strong class="detail-status ${detail.status}">${detail.status_label || '-'}</strong></div>
+            </div>
+            <div class="detail-section">
                 <h4>Informasi Transaksi</h4>
-                <p>Metode: ${detail.method || '-'}<br>Jatuh tempo: ${detail.due_date || '-'}<br>Tanggal bayar: ${detail.paid_date || '-'}<br>Update: ${detail.updated_at || '-'}</p>
+                <div class="detail-row"><span>Metode</span><strong>${detail.method || '-'}</strong></div>
+                <div class="detail-row"><span>Order ID</span><strong>${detail.order_id || '-'}</strong></div>
+                <div class="detail-row"><span>Transaction ID</span><strong>${detail.transaction_id || '-'}</strong></div>
+                <div class="detail-row"><span>Tanggal Bayar</span><strong>${detail.paid_date || '-'}</strong></div>
+                <div class="detail-row"><span>Update</span><strong>${detail.updated_at || '-'}</strong></div>
             </div>
             <div class="detail-section">
                 <h4>Bukti Pembayaran</h4>
-                <p>${detail.proof?.available ? detail.proof.label : 'Bukti belum tersedia karena pembayaran belum lunas.'}</p>
-                <div class="detail-actions">
-                    <a class="modal-pay" href="${receiptUrl}" download="bukti-${detail.id}.txt"><i class="fas fa-download"></i> Download Bukti</a>
-                    <button class="modal-cancel" type="button" id="printPaymentDetail"><i class="fas fa-print"></i> Cetak Detail</button>
-                </div>
+                ${proofBlock}
             </div>
         `;
 

@@ -28,15 +28,17 @@ class AdminController extends Controller
         $this->syncOverdueInvoices();
 
         $students = User::where('role', 'santri')->with('invoices')->get();
+        $allInvoices = Invoice::with('user')->get();
+        $paymentSummary = summarizePaymentCollection($allInvoices);
         $totalSantri = $students->count();
         $totalPaid = $students->filter(fn (User $santri) => getPaymentStatus($santri->invoices)['status'] === 'lunas')->count();
         $totalUnpaid = $students->filter(fn (User $santri) => in_array(getPaymentStatus($santri->invoices)['status'], ['belum', 'terlambat', 'cicilan'], true))->count();
         $totalTunggak = $students->filter(fn (User $santri) => getPaymentStatus($santri->invoices)['status'] === 'terlambat')->count();
-        $totalRevenue = Invoice::where('status', 'lunas')->sum('total');
-        $totalTagihan = Invoice::sum('total');
-        $totalPenalty = Invoice::sum('penalty');
-        $outstanding = Invoice::whereIn('status', ['belum', 'terlambat'])->sum('total');
-        $overdueAmount = Invoice::where('status', 'terlambat')->sum('total');
+        $totalRevenue = $paymentSummary['total_pembayaran'];
+        $totalTagihan = $paymentSummary['total_tagihan'];
+        $totalPenalty = $paymentSummary['total_denda'];
+        $outstanding = $paymentSummary['outstanding'];
+        $overdueAmount = $paymentSummary['overdue_amount'];
         $semesterFee = 2200000;
         $collectibility = $totalTagihan > 0 ? round(($totalRevenue / $totalTagihan) * 100) : 0;
         $pendingVerification = Invoice::whereNotNull('midtrans_order_id')
@@ -70,6 +72,8 @@ class AdminController extends Controller
             'pendingVerification' => $pendingVerification,
             'pendingVerificationAmount' => $pendingVerificationAmount,
             'outstanding' => $outstanding,
+            'paymentDistribution' => $paymentSummary['distribution'],
+            'charts' => $this->paymentCharts($allInvoices),
             'highRiskSantri' => $riskRows->where('risk_label', 'Tinggi')->count(),
             'topRiskSantri' => $riskRows->take(5)->values(),
         ]);
@@ -487,7 +491,13 @@ class AdminController extends Controller
             ];
         })->values();
 
-        return response()->json(['data' => $rows]);
+        $allInvoices = Invoice::with('user')->get();
+
+        return response()->json([
+            'data' => $rows,
+            'summary' => summarizePaymentCollection($allInvoices),
+            'charts' => $this->paymentCharts($allInvoices),
+        ]);
     }
 
     public function exportReport(Request $request, string $format)
@@ -504,19 +514,24 @@ class AdminController extends Controller
         }
 
         if ($format === 'excel') {
-            return response($this->excelReportHtml($rows))
+            return response($this->excelReportHtml($rows, $request))
                 ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
                 ->header('Content-Disposition', "attachment; filename=\"{$filename}.xls\"");
         }
 
-        return response($this->tableExportContent($rows, ','))
+        return response($this->tableExportContent($rows, ',', $request))
             ->header('Content-Type', 'text/csv; charset=UTF-8')
             ->header('Content-Disposition', "attachment; filename=\"{$filename}.csv\"");
     }
 
     public function reportData(Request $request): \Illuminate\Http\JsonResponse
     {
-        return response()->json(['data' => $this->paymentReportRows($request)]);
+        $rows = $this->paymentReportRows($request);
+
+        return response()->json([
+            'data' => $rows,
+            'summary' => $this->reportSummary($rows),
+        ]);
     }
 
     public function changePassword(Request $request): \Illuminate\Http\JsonResponse
@@ -808,33 +823,52 @@ class AdminController extends Controller
         return $query->get()
             ->map(function (Invoice $invoice) {
                 $status = getPaymentStatus($invoice);
+                $metrics = paymentMetricsForInvoice($invoice);
 
                 return [
-                'Nama Santri' => $invoice->user?->name ?? '-',
-                'NIS/NIP' => $invoice->user?->nis ?? '-',
-                'Kelamin' => $invoice->user?->gender ?? '-',
-                'Angkatan' => optional($invoice->user?->created_at)->format('Y') ?? '-',
-                'Tagihan' => $invoice->name,
-                'Pokok' => $invoice->amount,
-                'Denda' => $status['penalty'],
-                'Total' => $status['total'],
-                'Status' => $status['label'],
-                'Metode' => $invoice->payment_method ?? '-',
-                'Tanggal Bayar' => $this->formatInvoiceDate($invoice->paid_date) ?? '-',
-                'Update Terakhir' => optional($invoice->updated_at)->format('Y-m-d H:i'),
-            ];
+                    'Nama Santri' => $invoice->user?->name ?? '-',
+                    'NIS/NIP' => $invoice->user?->nis ?? '-',
+                    'Kelamin' => $invoice->user?->gender ?? '-',
+                    'Angkatan' => optional($invoice->user?->created_at)->format('Y') ?? '-',
+                    'Tagihan' => $invoice->name,
+                    'Pokok' => $metrics['amount'],
+                    'Denda' => $metrics['penalty'],
+                    'Total' => $metrics['total'],
+                    'Pembayaran' => $metrics['paid'],
+                    'Outstanding' => $metrics['outstanding'],
+                    'Status' => $status['label'],
+                    'Metode' => $invoice->payment_method ?? '-',
+                    'Tanggal Bayar' => $this->formatInvoiceDate($invoice->paid_date) ?? '-',
+                    'Update Terakhir' => optional($invoice->updated_at)->format('Y-m-d H:i'),
+                ];
             })
             ->values()
             ->all();
     }
 
-    private function tableExportContent(array $rows, string $separator): string
+    private function tableExportContent(array $rows, string $separator, Request $request): string
     {
-        $headers = ['Nama Santri', 'NIS/NIP', 'Kelamin', 'Angkatan', 'Tagihan', 'Pokok', 'Denda', 'Total', 'Status', 'Metode', 'Tanggal Bayar', 'Update Terakhir'];
-        $lines = [$this->joinExportRow($headers, $separator)];
+        $headers = ['Nama Santri', 'NIS/NIP', 'Kelamin', 'Angkatan', 'Tagihan', 'Pokok', 'Denda', 'Total', 'Pembayaran', 'Outstanding', 'Status', 'Metode', 'Tanggal Bayar', 'Update Terakhir'];
+        $summary = $this->reportSummary($rows);
+        $lines = [
+            $this->joinExportRow(['Laporan Pembayaran SyaJagad'], $separator),
+            $this->joinExportRow(['Tanggal Cetak', now()->format('d/m/Y H:i')], $separator),
+            $this->joinExportRow(['Periode Laporan', $this->reportPeriodLabel($request)], $separator),
+            $this->joinExportRow(['Total Santri', $summary['total_santri']], $separator),
+            $this->joinExportRow(['Total Tagihan', $this->formatRupiah($summary['total_tagihan'])], $separator),
+            $this->joinExportRow(['Total Pembayaran', $this->formatRupiah($summary['total_pembayaran'])], $separator),
+            $this->joinExportRow(['Outstanding', $this->formatRupiah($summary['outstanding'])], $separator),
+            '',
+            $this->joinExportRow($headers, $separator),
+        ];
 
         foreach ($rows as $row) {
-            $lines[] = $this->joinExportRow(array_map(fn ($header) => $row[$header] ?? '', $headers), $separator);
+            $lines[] = $this->joinExportRow(array_map(function ($header) use ($row) {
+                $value = $row[$header] ?? '';
+                return in_array($header, ['Pokok', 'Denda', 'Total', 'Pembayaran', 'Outstanding'], true)
+                    ? $this->formatRupiah((int) $value)
+                    : $value;
+            }, $headers), $separator);
         }
 
         return "\xEF\xBB\xBF" . implode("\n", $lines);
@@ -853,13 +887,21 @@ class AdminController extends Controller
         }, $values));
     }
 
-    private function excelReportHtml(array $rows): string
+    private function excelReportHtml(array $rows, Request $request): string
     {
-        $headers = ['Nama Santri', 'NIS/NIP', 'Kelamin', 'Angkatan', 'Tagihan', 'Pokok', 'Denda', 'Total', 'Status', 'Metode', 'Tanggal Bayar', 'Update Terakhir'];
+        $headers = ['Nama Santri', 'NIS/NIP', 'Kelamin', 'Angkatan', 'Tagihan', 'Pokok', 'Denda', 'Total', 'Pembayaran', 'Outstanding', 'Status', 'Metode', 'Tanggal Bayar', 'Update Terakhir'];
+        $summary = $this->reportSummary($rows);
+        $colspan = $this->excelColspan($headers);
+        $metaColspan = $colspan - 1;
+        $generatedAt = $this->escapeHtml(now()->format('d/m/Y H:i'));
+        $periodLabel = $this->escapeHtml($this->reportPeriodLabel($request));
+        $totalTagihan = $this->formatRupiah($summary['total_tagihan']);
+        $totalPembayaran = $this->formatRupiah($summary['total_pembayaran']);
+        $outstanding = $this->formatRupiah($summary['outstanding']);
         $headerCells = collect($headers)->map(fn ($header) => '<th>' . e($header) . '</th>')->implode('');
         $bodyRows = collect($rows)->map(function (array $row) use ($headers) {
             $cells = collect($headers)->map(function ($header) use ($row) {
-                $value = in_array($header, ['Pokok', 'Denda', 'Total'], true)
+                $value = in_array($header, ['Pokok', 'Denda', 'Total', 'Pembayaran', 'Outstanding'], true)
                     ? $this->formatRupiah((int) ($row[$header] ?? 0))
                     : ($row[$header] ?? '');
 
@@ -877,11 +919,18 @@ class AdminController extends Controller
         table { border-collapse: collapse; width: 100%; }
         th { background: #2f6b35; color: #ffffff; font-weight: 700; }
         th, td { border: 1px solid #b7d7bf; padding: 8px; white-space: nowrap; }
-        td:nth-child(6), td:nth-child(7), td:nth-child(8) { mso-number-format:"\@"; }
+        .title { background: #2f6b35; color: #fff; font-size: 18px; font-weight: 700; }
+        .meta { background: #e8f5ea; font-weight: 700; }
+        td:nth-child(6), td:nth-child(7), td:nth-child(8), td:nth-child(9), td:nth-child(10) { mso-number-format:"\@"; }
     </style>
 </head>
 <body>
     <table>
+        <tr><td class="title" colspan="{$colspan}">Laporan Pembayaran SyaJagad</td></tr>
+        <tr><td class="meta">Tanggal Cetak</td><td colspan="{$metaColspan}">{$generatedAt}</td></tr>
+        <tr><td class="meta">Periode Laporan</td><td colspan="{$metaColspan}">{$periodLabel}</td></tr>
+        <tr><td class="meta">Total Santri</td><td>{$summary['total_santri']}</td><td class="meta">Total Tagihan</td><td>{$totalTagihan}</td><td class="meta">Total Pembayaran</td><td>{$totalPembayaran}</td><td class="meta">Outstanding</td><td>{$outstanding}</td></tr>
+        <tr><td colspan="{$colspan}"></td></tr>
         <thead><tr>{$headerCells}</tr></thead>
         <tbody>{$bodyRows}</tbody>
     </table>
@@ -971,5 +1020,68 @@ HTML;
     private function escapeHtml(mixed $value): string
     {
         return e((string) $value);
+    }
+
+    private function paymentCharts(Collection $invoices): array
+    {
+        $labels = [
+            'lunas' => 'Lunas',
+            'belum' => 'Belum Bayar',
+            'terlambat' => 'Menunggak',
+            'cicilan' => 'Cicilan',
+        ];
+        $summary = summarizePaymentCollection($invoices);
+        $trend = $invoices
+            ->groupBy(fn (Invoice $invoice) => $this->parseInvoiceDate($invoice->due_date)?->format('Y-m') ?? 'Tanpa Tanggal')
+            ->sortKeys()
+            ->map(function ($monthRows, $month) {
+                $monthSummary = summarizePaymentCollection($monthRows);
+
+                return [
+                    'month' => $month,
+                    'total_tagihan' => $monthSummary['total_tagihan'],
+                    'total_pembayaran' => $monthSummary['total_pembayaran'],
+                    'total_denda' => $monthSummary['total_denda'],
+                    'outstanding' => $monthSummary['outstanding'],
+                ];
+            })
+            ->values()
+            ->all();
+
+        return [
+            'summary' => $summary,
+            'status_distribution' => collect($summary['distribution'])
+                ->map(fn ($count, $status) => [
+                    'status' => $status,
+                    'label' => $labels[$status] ?? $this->invoiceStatusLabel((string) $status),
+                    'count' => $count,
+                ])
+                ->values()
+                ->all(),
+            'monthly_trend' => $trend,
+        ];
+    }
+
+    private function reportSummary(array $rows): array
+    {
+        return [
+            'total_santri' => collect($rows)->pluck('NIS/NIP')->filter()->unique()->count(),
+            'total_tagihan' => (int) collect($rows)->sum('Total'),
+            'total_pembayaran' => (int) collect($rows)->sum('Pembayaran'),
+            'outstanding' => (int) collect($rows)->sum('Outstanding'),
+        ];
+    }
+
+    private function reportPeriodLabel(Request $request): string
+    {
+        $start = $request->filled('start_date') ? $request->date('start_date')->format('d/m/Y') : 'Awal data';
+        $end = $request->filled('end_date') ? $request->date('end_date')->format('d/m/Y') : 'Akhir data';
+
+        return "{$start} - {$end}";
+    }
+
+    private function excelColspan(array $headers): int
+    {
+        return count($headers);
     }
 }

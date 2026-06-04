@@ -78,25 +78,44 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const renderCharts = (payments = [], santri = []) => {
+    const renderCharts = (payments = [], santri = [], chartPayload = null) => {
         const paymentCtx = document.getElementById('paymentChart');
         const revenueCtx = document.getElementById('revenueChart');
         const demographyCtx = document.getElementById('demographyChart');
 
         const payableRows = payments.filter((item) => item.status !== 'no_invoice');
-        const monthLabels = Array.from(new Set(payableRows.map((item) => item.month || 'Lainnya'))).slice(0, 8);
+        const trendRows = chartPayload?.monthly_trend || [];
+        const distributionRows = chartPayload?.status_distribution || [];
+        const monthLabels = trendRows.length
+            ? trendRows.map((item) => item.month)
+            : Array.from(new Set(payableRows.map((item) => item.month || 'Lainnya'))).slice(0, 8);
         const angkatanLabels = Array.from(new Set(santri.map((item) => item.angkatan || 'Tidak Diketahui')));
 
         const getStatusSum = (month, status) => payableRows
             .filter((item) => (item.month || 'Lainnya') === month && item.status === status)
             .reduce((sum, item) => sum + Number(item.total || 0), 0);
 
-        const paidCounts = monthLabels.map((month) => payableRows.filter((item) => (item.month || 'Lainnya') === month && item.status === 'lunas').length);
-        const unpaidCounts = monthLabels.map((month) => payableRows.filter((item) => (item.month || 'Lainnya') === month && ['belum', 'terlambat'].includes(item.status)).length);
-        const paidRevenue = monthLabels.map((month) => getStatusSum(month, 'lunas'));
-        const outstandingRevenue = monthLabels.map((month) => payableRows
-            .filter((item) => (item.month || 'Lainnya') === month && ['belum', 'terlambat'].includes(item.status))
+        const totalTagihan = trendRows.length ? trendRows.map((item) => Number(item.total_tagihan || 0)) : monthLabels.map((month) => getStatusSum(month, 'lunas') + payableRows
+            .filter((item) => (item.month || 'Lainnya') === month && ['belum', 'terlambat', 'cicilan'].includes(item.status))
             .reduce((sum, item) => sum + Number(item.total || 0), 0));
+        const paidRevenue = trendRows.length ? trendRows.map((item) => Number(item.total_pembayaran || 0)) : monthLabels.map((month) => getStatusSum(month, 'lunas'));
+        const penaltyRevenue = trendRows.length ? trendRows.map((item) => Number(item.total_denda || 0)) : monthLabels.map((month) => payableRows
+            .filter((item) => (item.month || 'Lainnya') === month)
+            .reduce((sum, item) => sum + Number(item.penalty || 0), 0));
+        const outstandingRevenue = trendRows.length ? trendRows.map((item) => Number(item.outstanding || 0)) : monthLabels.map((month) => payableRows
+            .filter((item) => (item.month || 'Lainnya') === month && ['belum', 'terlambat', 'cicilan'].includes(item.status))
+            .reduce((sum, item) => sum + Number(item.total || 0), 0));
+        const distributionLabels = distributionRows.length
+            ? distributionRows.map((item) => item.label)
+            : ['Lunas', 'Belum Bayar', 'Menunggak', 'Cicilan'];
+        const distributionData = distributionRows.length
+            ? distributionRows.map((item) => Number(item.count || 0))
+            : [
+                payableRows.filter((item) => item.status === 'lunas').length,
+                payableRows.filter((item) => item.status === 'belum').length,
+                payableRows.filter((item) => item.status === 'terlambat').length,
+                payableRows.filter((item) => item.status === 'cicilan').length,
+            ];
 
         const angkatanCounts = angkatanLabels.map((angkatan) => santri.filter((item) => (item.angkatan || 'Tidak Diketahui') === angkatan).length);
 
@@ -108,49 +127,53 @@ document.addEventListener('DOMContentLoaded', () => {
             labels: monthLabels,
             datasets: [
                 {
-                    label: 'Sudah Bayar',
-                    data: paidCounts,
+                    label: 'Total Tagihan',
+                    data: totalTagihan,
+                    borderColor: '#2f6b35',
+                    backgroundColor: 'rgba(47,107,53,0.1)',
+                    tension: 0.35,
+                    fill: true,
+                },
+                {
+                    label: 'Total Pembayaran',
+                    data: paidRevenue,
                     borderColor: '#22c55e',
                     backgroundColor: 'rgba(34,197,94,0.15)',
                     tension: 0.35,
-                    fill: true,
+                    fill: false,
                 },
                 {
-                    label: 'Belum Bayar',
-                    data: unpaidCounts,
+                    label: 'Total Denda',
+                    data: penaltyRevenue,
                     borderColor: '#f59e0b',
                     backgroundColor: 'rgba(249,115,22,0.15)',
                     tension: 0.35,
-                    fill: true,
-                },
-            ],
-        });
-
-        revenueChart = buildChart(revenueCtx, 'line', {
-            labels: monthLabels,
-            datasets: [
-                {
-                    label: 'Pendapatan Lunas',
-                    data: paidRevenue,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59,130,246,0.12)',
-                    tension: 0.35,
-                    fill: true,
+                    fill: false,
                 },
                 {
-                    label: 'Tunggakan',
+                    label: 'Outstanding',
                     data: outstandingRevenue,
                     borderColor: '#ef4444',
                     backgroundColor: 'rgba(239,68,68,0.1)',
                     tension: 0.35,
-                    fill: true,
+                    fill: false,
                 },
             ],
         }, {
             scales: {
                 x: { grid: { display: false } },
-                y: { beginAtZero: true, grid: { color: 'rgba(203,213,225,0.35)' }, ticks: { callback: (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value) } },
+                y: { beginAtZero: true, grid: { color: 'rgba(203,213,225,0.35)' }, ticks: { callback: (value) => formatRupiah(value) } },
             },
+        });
+
+        revenueChart = buildChart(revenueCtx, 'doughnut', {
+            labels: distributionLabels,
+            datasets: [{
+                data: distributionData,
+                backgroundColor: ['#22c55e', '#f59e0b', '#ef4444', '#3b82f6'],
+            }],
+        }, {
+            scales: {},
         });
 
         demographyChart = buildChart(demographyCtx, 'doughnut', {
@@ -337,7 +360,8 @@ document.addEventListener('DOMContentLoaded', () => {
             setText('totalPemasukan', formatRupiah(data.totalRevenue));
             setText('totalBayar', formatRupiah(data.totalRevenue));
             setText('totalTagihan', formatRupiah(data.totalTagihan));
-            setText('sisaTagihan', formatRupiah(Math.max(data.totalTagihan - data.totalRevenue, 0)));
+            setText('sisaTagihan', formatRupiah(data.outstanding ?? Math.max(data.totalTagihan - data.totalRevenue, 0)));
+            renderCharts(paymentData, santriData, data.charts);
             updateAdminSummary();
             fetchAuditLogs();
             fetchPermissions();
@@ -501,10 +525,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${santri.angkatan || new Date(santri.created_at).getFullYear()}</td>
                 <td>
                     <span class="${getStatusClass(santri.status)}">${santri.status}</span>
-                    <span class="${getStatusClass(santri.payment_status)}">${santri.payment_status || '-'}</span>
-                    <span class="risk-badge ${riskClass(santri.risk_label)}">${santri.risk_label || 'Rendah'} ${santri.risk_score ?? 0}</span>
                 </td>
-                <td>
+                <td class="santri-actions">
                     <button class="btn-secondary small" data-action="view" data-id="${santri.id}">Lihat</button>
                     <button class="btn-primary small" data-action="invoice" data-id="${santri.id}">Tagihan</button>
                     <button class="btn-warning small" data-action="edit" data-id="${santri.id}">Edit</button>
@@ -545,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
             paymentData = json.data;
             filterPayments();
             renderRecentPayments(json.data.filter((item) => item.status === 'lunas').slice(0, 5));
-            renderCharts(json.data, santriData);
+            renderCharts(json.data, santriData, json.charts);
             fetchReportData();
         } catch (error) {
             console.error(error);

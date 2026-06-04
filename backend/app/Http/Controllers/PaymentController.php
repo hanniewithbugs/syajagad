@@ -193,10 +193,16 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function status(Invoice $invoice)
+    public function status(int $invoice)
     {
-        if ($invoice->user_id !== Auth::id()) {
-            abort(404);
+        $invoice = $this->findUserInvoice($invoice);
+
+        if (! $invoice) {
+            return response()->json([
+                'paid' => false,
+                'pending' => false,
+                'message' => 'Tagihan tidak ditemukan atau sudah tidak tersedia.',
+            ], 404);
         }
 
         if (! $invoice->midtrans_order_id) {
@@ -214,14 +220,19 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function detail(Invoice $invoice)
+    public function detail(int $invoice)
     {
-        if ($invoice->user_id !== Auth::id()) {
-            abort(404);
+        $invoice = $this->findUserInvoice($invoice);
+
+        if (! $invoice) {
+            return response()->json([
+                'message' => 'Detail pembayaran tidak ditemukan atau sudah tidak tersedia.',
+            ], 404);
         }
 
         $invoice->load('user');
         $status = getPaymentStatus($invoice);
+        $metrics = paymentMetricsForInvoice($invoice);
 
         return response()->json([
             'data' => [
@@ -230,9 +241,11 @@ class PaymentController extends Controller
                 'description' => $invoice->description,
                 'status' => $status['status'],
                 'status_label' => $status['label'],
-                'amount' => (int) $invoice->amount,
-                'penalty' => (int) $status['penalty'],
-                'total' => (int) $status['total'],
+                'amount' => $metrics['amount'],
+                'penalty' => $metrics['penalty'],
+                'total' => $metrics['total'],
+                'paid_amount' => $metrics['paid'],
+                'outstanding' => $metrics['outstanding'],
                 'due_date' => self::formatDate($invoice->due_date),
                 'paid_date' => self::formatDate($invoice->paid_date),
                 'method' => $invoice->payment_method,
@@ -246,10 +259,7 @@ class PaymentController extends Controller
                     'gender' => $invoice->user?->gender,
                     'alamat' => $invoice->user?->alamat,
                 ],
-                'proof' => [
-                    'available' => filled($invoice->midtrans_order_id) || $invoice->status === 'lunas',
-                    'label' => filled($invoice->midtrans_order_id) ? $invoice->midtrans_order_id : 'Bukti pembayaran lokal',
-                ],
+                'proof' => $this->buildProofData($invoice),
             ],
         ]);
     }
@@ -401,6 +411,62 @@ class PaymentController extends Controller
             'gopay', 'qris', 'shopeepay' => 'qris',
             default => $paymentType,
         };
+    }
+
+    private function findUserInvoice(int $invoiceId): ?Invoice
+    {
+        if ($invoiceId < 1) {
+            return null;
+        }
+
+        return Invoice::where('id', $invoiceId)
+            ->where('user_id', Auth::id())
+            ->first();
+    }
+
+    private function buildProofData(Invoice $invoice): array
+    {
+        $payload = is_array($invoice->midtrans_response) ? $invoice->midtrans_response : [];
+        $url = $this->findProofImageUrl($payload);
+
+        return [
+            'available' => filled($url),
+            'label' => filled($url)
+                ? 'Bukti pembayaran tersedia'
+                : 'Bukti pembayaran belum tersedia.',
+            'url' => $url,
+            'filename' => 'bukti-pembayaran-' . $invoice->id . ($url ? '.' . pathinfo(parse_url($url, PHP_URL_PATH) ?: '', PATHINFO_EXTENSION) : ''),
+            'is_image' => filled($url),
+        ];
+    }
+
+    private function findProofImageUrl(array $payload): ?string
+    {
+        $keys = ['proof_url', 'payment_proof_url', 'receipt_url', 'image_url', 'url'];
+
+        foreach ($keys as $key) {
+            $value = $payload[$key] ?? null;
+            if (is_string($value) && $this->isSupportedProofImage($value)) {
+                return $value;
+            }
+        }
+
+        foreach ($payload as $value) {
+            if (is_array($value)) {
+                $nested = $this->findProofImageUrl($value);
+                if ($nested) {
+                    return $nested;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function isSupportedProofImage(string $url): bool
+    {
+        $path = parse_url($url, PHP_URL_PATH) ?: $url;
+        return (bool) preg_match('/\.(jpe?g|png|webp)$/i', $path);
     }
 
     private function isValidNotificationSignature(array $payload, string $serverKey): bool
