@@ -20,8 +20,12 @@ class LocalChatbotService
         'kontak_admin',
     ];
 
-    public function answer(User $user, string $intent): array
+    public function answer(User $user, ?string $intent, ?string $message = null): array
     {
+        $intent = in_array($intent, self::INTENTS, true)
+            ? $intent
+            : $this->resolveIntent($message);
+
         $invoices = Invoice::where('user_id', $user->id)
             ->latest('due_date')
             ->get();
@@ -40,7 +44,7 @@ class LocalChatbotService
             'status_terakhir' => $this->statusTerakhir($invoices),
             'rekomendasi' => $this->rekomendasi($activeInvoices),
             'kontak_admin' => $this->kontakAdmin(),
-            default => 'Maaf, pilihan itu belum tersedia.',
+            default => $this->fallback(),
         };
 
         return [
@@ -52,6 +56,32 @@ class LocalChatbotService
                 'penalty_total' => $activeInvoices->sum(fn (Invoice $invoice) => (int) ($invoice->penalty ?? 0)),
             ],
         ];
+    }
+
+    private function resolveIntent(?string $message): string
+    {
+        $text = strtolower((string) $message);
+
+        if ($text === '') {
+            return 'fallback';
+        }
+
+        return match (true) {
+            str_contains($text, 'denda') || str_contains($text, 'telat') || str_contains($text, 'terlambat') => 'denda',
+            str_contains($text, 'qris') => 'cara_bayar_qris',
+            str_contains($text, 'va') || str_contains($text, 'virtual account') || str_contains($text, 'transfer') || str_contains($text, 'bayar') => 'cara_bayar_va',
+            str_contains($text, 'status') || str_contains($text, 'terakhir') || str_contains($text, 'lunas') => 'status_terakhir',
+            str_contains($text, 'aktif') || str_contains($text, 'belum') || str_contains($text, 'tunggak') => 'tagihan_aktif',
+            str_contains($text, 'berapa') || str_contains($text, 'total') || str_contains($text, 'tagihan') || str_contains($text, 'spp') => 'total_tagihan',
+            str_contains($text, 'saran') || str_contains($text, 'rekomendasi') || str_contains($text, 'prioritas') => 'rekomendasi',
+            str_contains($text, 'admin') || str_contains($text, 'kontak') || str_contains($text, 'hubungi') => 'kontak_admin',
+            default => 'fallback',
+        };
+    }
+
+    private function fallback(): string
+    {
+        return 'Saya belum memahami pertanyaan itu. Saya paling akurat untuk hal yang berhubungan dengan SyaJagad, seperti tagihan, denda, status pembayaran, cara bayar QRIS/VA, rekomendasi pelunasan, atau kontak admin.';
     }
 
     private function totalTagihan(Collection $activeInvoices): string

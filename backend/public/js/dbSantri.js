@@ -161,6 +161,14 @@ class SyaJagadDashboard {
 
             this.askChatbot(option.dataset.intent, option.textContent.trim());
         });
+        document.getElementById('chatbotForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('chatbotInput');
+            const message = input?.value.trim() || '';
+            if (!message) return;
+            if (input) input.value = '';
+            this.askChatbot(null, message);
+        });
 
         // Other modal handlers
         this.bindModalHandlers();
@@ -591,6 +599,7 @@ class SyaJagadDashboard {
         const transactionNumber = detail.order_id || detail.transaction_id || `TRX-${String(detail.id).padStart(4, '0')}`;
         const proofUrl = detail.proof?.is_image && detail.proof?.url ? detail.proof.url : '';
         const proofFilename = detail.proof?.filename || `bukti-pembayaran-${detail.id}.jpg`;
+        const pngFilename = `bukti-pembayaran-${String(transactionNumber).replace(/[^a-z0-9-]/gi, '-')}.png`;
         const proofBlock = proofUrl
             ? `
                 <div class="proof-preview">
@@ -599,7 +608,7 @@ class SyaJagadDashboard {
                 <div class="detail-actions">
                     <a class="modal-cancel" href="${proofUrl}" target="_blank" rel="noopener"><i class="fas fa-eye"></i> Lihat Bukti</a>
                     <a class="modal-pay" href="${proofUrl}" download="${proofFilename}"><i class="fas fa-download"></i> Download Gambar</a>
-                    <button class="modal-cancel" type="button" id="printPaymentDetail"><i class="fas fa-print"></i> Cetak Detail</button>
+                    <button class="modal-pay" type="button" id="downloadPaymentDetail" data-filename="${pngFilename}"><i class="fas fa-download"></i> Download PNG</button>
                 </div>
             `
             : `
@@ -608,48 +617,43 @@ class SyaJagadDashboard {
                     <span>Bukti pembayaran belum tersedia.</span>
                 </div>
                 <div class="detail-actions">
-                    <button class="modal-cancel" type="button" id="printPaymentDetail"><i class="fas fa-print"></i> Cetak Detail</button>
+                    <button class="modal-pay" type="button" id="downloadPaymentDetail" data-filename="${pngFilename}"><i class="fas fa-download"></i> Download PNG</button>
                 </div>
             `;
 
         body.innerHTML = `
-            <div class="detail-section detail-title">
-                <span>Nama Tagihan</span>
-                <strong>${detail.name || '-'}</strong>
-                <small>${detail.description || '-'}</small>
-            </div>
-            <div class="detail-grid">
-                <div><span>Nomor Transaksi</span><strong>${transactionNumber}</strong></div>
-                <div><span>Status</span><strong class="detail-status ${detail.status}">${detail.status_label || '-'}</strong></div>
-            </div>
-            <div class="detail-section">
-                <h4>Data Santri</h4>
-                <div class="detail-row"><span>Nama</span><strong>${detail.student?.name || '-'}</strong></div>
-                <div class="detail-row"><span>NIS</span><strong>${detail.student?.nis || '-'}</strong></div>
-                <div class="detail-row"><span>Email</span><strong>${detail.student?.email || '-'}</strong></div>
-                <div class="detail-row"><span>Jenis Kelamin</span><strong>${detail.student?.gender || '-'}</strong></div>
-            </div>
-            <div class="detail-section">
-                <h4>Informasi Tagihan</h4>
-                <div class="detail-row"><span>Jatuh Tempo</span><strong>${detail.due_date || '-'}</strong></div>
-                <div class="detail-row"><span>Deskripsi</span><strong>${detail.description || '-'}</strong></div>
-                <div class="detail-row"><span>Pokok</span><strong>${this.formatRupiah(detail.amount || 0)}</strong></div>
-                <div class="detail-row"><span>Denda</span><strong>${this.formatRupiah(detail.penalty || 0)}</strong></div>
-                <div class="detail-row total"><span>Total</span><strong>${this.formatRupiah(detail.total || 0)}</strong></div>
-            </div>
-            <div class="detail-section">
-                <h4>Ringkasan Pembayaran</h4>
-                <div class="detail-row"><span>Sudah Dibayar</span><strong>${this.formatRupiah(detail.paid_amount || 0)}</strong></div>
-                <div class="detail-row"><span>Outstanding</span><strong>${this.formatRupiah(detail.outstanding || 0)}</strong></div>
-                <div class="detail-row"><span>Status</span><strong class="detail-status ${detail.status}">${detail.status_label || '-'}</strong></div>
-            </div>
-            <div class="detail-section">
-                <h4>Informasi Transaksi</h4>
-                <div class="detail-row"><span>Metode</span><strong>${detail.method || '-'}</strong></div>
-                <div class="detail-row"><span>Order ID</span><strong>${detail.order_id || '-'}</strong></div>
-                <div class="detail-row"><span>Transaction ID</span><strong>${detail.transaction_id || '-'}</strong></div>
-                <div class="detail-row"><span>Tanggal Bayar</span><strong>${detail.paid_date || '-'}</strong></div>
-                <div class="detail-row"><span>Update</span><strong>${detail.updated_at || '-'}</strong></div>
+            <div class="payment-receipt" id="paymentReceipt">
+                <div class="receipt-header">
+                    <div>
+                        <span>Bukti Pembayaran</span>
+                        <strong>SyaJagad</strong>
+                    </div>
+                    <span class="receipt-status ${detail.status}">${detail.status_label || '-'}</span>
+                </div>
+                <div class="receipt-title">
+                    <strong>${detail.name || '-'}</strong>
+                    <span>${detail.description || 'Pembayaran SPP Pesantren'}</span>
+                </div>
+                <div class="receipt-grid">
+                    <div><span>No. Transaksi</span><strong>${transactionNumber}</strong></div>
+                    <div><span>Tanggal Bayar</span><strong>${detail.paid_date || detail.updated_at || '-'}</strong></div>
+                    <div><span>Nama Santri</span><strong>${detail.student?.name || '-'}</strong></div>
+                    <div><span>NIS</span><strong>${detail.student?.nis || '-'}</strong></div>
+                    <div><span>Metode</span><strong>${detail.method || '-'}</strong></div>
+                    <div><span>Jatuh Tempo</span><strong>${detail.due_date || '-'}</strong></div>
+                </div>
+                <div class="receipt-lines">
+                    <div><span>Pokok</span><strong>${this.formatRupiah(detail.amount || 0)}</strong></div>
+                    <div><span>Denda</span><strong>${this.formatRupiah(detail.penalty || 0)}</strong></div>
+                    <div><span>Sudah Dibayar</span><strong>${this.formatRupiah(detail.paid_amount || 0)}</strong></div>
+                    <div><span>Outstanding</span><strong>${this.formatRupiah(detail.outstanding || 0)}</strong></div>
+                    <div class="receipt-total"><span>Total Tagihan</span><strong>${this.formatRupiah(detail.total || 0)}</strong></div>
+                </div>
+                <div class="receipt-meta">
+                    <span>Order ID: ${detail.order_id || '-'}</span>
+                    <span>Transaction ID: ${detail.transaction_id || '-'}</span>
+                </div>
+                <div class="receipt-footer">SyaJagad - Sistem Pembayaran SPP Pesantren</div>
             </div>
             <div class="detail-section">
                 <h4>Bukti Pembayaran</h4>
@@ -657,7 +661,29 @@ class SyaJagadDashboard {
             </div>
         `;
 
-        document.getElementById('printPaymentDetail')?.addEventListener('click', () => window.print());
+        document.getElementById('downloadPaymentDetail')?.addEventListener('click', (event) => {
+            this.downloadPaymentDetailPng(event.currentTarget.dataset.filename || pngFilename);
+        });
+    }
+
+    async downloadPaymentDetailPng(filename) {
+        const receipt = document.getElementById('paymentReceipt');
+        if (!receipt) return;
+
+        if (typeof html2canvas === 'undefined') {
+            alert('Fitur download PNG belum siap. Muat ulang halaman lalu coba lagi.');
+            return;
+        }
+
+        const canvas = await html2canvas(receipt, {
+            backgroundColor: '#ffffff',
+            scale: Math.min(window.devicePixelRatio || 1, 2),
+            useCORS: true,
+        });
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
     }
 
     updatePaymentMethodDetails() {
@@ -785,7 +811,7 @@ class SyaJagadDashboard {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                 },
-                body: JSON.stringify({ intent }),
+                body: JSON.stringify(intent ? { intent } : { message: label }),
             });
 
             const result = await response.json();

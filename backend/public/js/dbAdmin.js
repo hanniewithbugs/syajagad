@@ -527,10 +527,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="${getStatusClass(santri.status)}">${santri.status}</span>
                 </td>
                 <td class="santri-actions">
-                    <button class="btn-secondary small" data-action="view" data-id="${santri.id}">Lihat</button>
-                    <button class="btn-primary small" data-action="invoice" data-id="${santri.id}">Tagihan</button>
-                    <button class="btn-warning small" data-action="edit" data-id="${santri.id}">Edit</button>
-                    <button class="btn-danger small" data-action="delete" data-id="${santri.id}">Hapus</button>
+                    <button class="btn-secondary small" data-action="view" data-id="${santri.id}"><i class="fas fa-eye"></i> Lihat</button>
+                    <button class="btn-primary small" data-action="invoice" data-id="${santri.id}"><i class="fas fa-file-invoice-dollar"></i> Tagihan</button>
+                    <button class="btn-warning small" data-action="edit" data-id="${santri.id}"><i class="fas fa-pen"></i> Edit</button>
+                    <button class="btn-danger small" data-action="delete" data-id="${santri.id}"><i class="fas fa-trash"></i> Hapus</button>
                 </td>
             </tr>
         `).join('');

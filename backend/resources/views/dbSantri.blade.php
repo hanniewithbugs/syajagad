@@ -652,10 +652,16 @@
             </div>
             <div class="chatbot-body" id="chatbotMessages">
                 <div class="chatbot-message bot">
-                    <span>Saya bisa bantu cek tagihan, denda, status pembayaran, dan cara bayar. Pilih salah satu menu cepat di bawah.</span>
+                    <span>Saya bisa bantu cek tagihan, denda, status pembayaran, dan cara bayar. Tulis pertanyaan bebas atau pilih menu cepat di bawah. Kalau di luar konteks aplikasi, saya akan arahkan kembali.</span>
                     <small class="chatbot-time">Baru saja</small>
                 </div>
             </div>
+            <form class="chatbot-form" id="chatbotForm">
+                <input type="text" id="chatbotInput" maxlength="500" placeholder="Tanya tagihan, denda, status, cara bayar...">
+                <button type="submit" aria-label="Kirim pertanyaan">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
             <div class="chatbot-options" id="chatbotOptions">
                 <button type="button" data-intent="total_tagihan">Total tagihan</button>
                 <button type="button" data-intent="tagihan_aktif">Belum lunas</button>
@@ -694,6 +700,7 @@
         src="{{ config('services.midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
         data-client-key="{{ config('services.midtrans.client_key') }}">
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="{{ asset('js/dbSantri.js') }}"></script>
 </body>
 </html>

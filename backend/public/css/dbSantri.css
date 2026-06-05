@@ -3027,6 +3027,40 @@ body,
     opacity: 0.65;
 }
 
+.chatbot-form {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.8rem 0.9rem;
+    border-top: 1px solid #e2e8f0;
+    background: #ffffff;
+}
+
+.chatbot-form input {
+    min-width: 0;
+    flex: 1;
+    border: 1px solid #dbe5ef;
+    border-radius: 999px;
+    padding: 0.7rem 0.9rem;
+    font: inherit;
+    outline: none;
+}
+
+.chatbot-form input:focus {
+    border-color: #0f766e;
+}
+
+.chatbot-form button {
+    width: 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #0f766e;
+    color: #ffffff;
+    cursor: pointer;
+}
+
 .chatbot-message.error {
     border-color: rgba(239,68,68,0.35);
     color: #991b1b;
@@ -5222,5 +5256,254 @@ body {
 
     .topbar-profile {
         display: none;
+    }
+}
+
+/* Dashboard admin refinement */
+#page-santri .data-table,
+#page-pembayaran .data-table {
+    min-width: 0;
+    table-layout: fixed;
+}
+
+#page-santri .data-table th:nth-child(1),
+#page-pembayaran .data-table th:nth-child(1) { width: 42px; }
+#page-santri .data-table th:nth-child(2),
+#page-pembayaran .data-table th:nth-child(2) { width: 24%; }
+#page-santri .data-table th:nth-child(3),
+#page-pembayaran .data-table th:nth-child(3) { width: 13%; }
+#page-santri .data-table th:nth-child(4),
+#page-pembayaran .data-table th:nth-child(4) { width: 13%; }
+#page-santri .data-table th:nth-child(5),
+#page-pembayaran .data-table th:nth-child(5) { width: 10%; }
+#page-santri .data-table th:nth-child(6),
+#page-pembayaran .data-table th:nth-child(6) { width: 14%; }
+#page-santri .data-table th:nth-child(7) { width: 26%; }
+
+#page-santri .data-table td,
+#page-pembayaran .data-table td,
+.payment-table td {
+    overflow-wrap: anywhere;
+}
+
+#page-santri .data-table td:nth-child(2),
+#page-pembayaran .data-table td:nth-child(2),
+.payment-table td:first-child {
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+.data-table thead th,
+.payment-table thead th {
+    background: #14532d;
+    color: #ffffff;
+    border-bottom: 0;
+}
+
+.data-table tbody tr:nth-child(even),
+.payment-table tbody tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+.data-table tbody tr:hover,
+.payment-table tbody tr:hover {
+    background: #ecfdf5;
+}
+
+.dashboard-summary-cards .summary-card,
+.tagihan-summary-cards .tagihan-card {
+    min-height: 118px;
+    padding: 1.15rem;
+}
+
+.summary-card .value,
+.tagihan-card .value,
+.sc-value {
+    font-size: clamp(1.35rem, 2.1vw, 2rem);
+    font-weight: 900;
+}
+
+.summary-card .sub::before,
+.sc-sub::before {
+    content: "+ ";
+    color: var(--green-dark);
+    font-weight: 900;
+}
+
+.sidebar {
+    box-shadow: 2px 0 18px rgba(15, 23, 42, 0.16);
+}
+
+.logo-icon,
+.avatar-img,
+.nav-item.active .nav-icon {
+    box-shadow: none;
+}
+
+.nav-item.active .nav-link {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.data-table .btn-primary.small {
+    background: #14532d;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.data-table .btn-secondary.small {
+    background: #f8fafc;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    box-shadow: none;
+}
+
+.data-table .btn-warning.small {
+    background: #ffffff;
+    color: #92400e;
+    border: 1px solid #f59e0b;
+    box-shadow: none;
+}
+
+.data-table .btn-danger.small {
+    background: #dc2626;
+    color: #ffffff;
+    border: 1px solid #dc2626;
+    box-shadow: none;
+}
+
+.santri-actions {
+    white-space: normal;
+}
+
+.santri-actions .small {
+    margin-bottom: 0.28rem;
+}
+
+.report-grid .content-card .card-body {
+    padding: 0.9rem 1rem 1rem;
+}
+
+.report-grid canvas {
+    max-height: 260px;
+}
+
+/* Compact professional payment receipt */
+.payment-receipt {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto 0.9rem;
+    overflow: hidden;
+    border: 1px solid #dbe7df;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #0f172a;
+}
+
+.receipt-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    color: #ffffff;
+    background: linear-gradient(135deg, #15803d, #166534);
+}
+
+.receipt-header span,
+.receipt-title span,
+.receipt-grid span,
+.receipt-lines span,
+.receipt-meta {
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.receipt-header span {
+    color: rgba(255,255,255,0.82);
+}
+
+.receipt-header strong {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 1.3rem;
+}
+
+.receipt-status {
+    border-radius: 999px;
+    padding: 0.45rem 0.7rem;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.34);
+    color: #ffffff !important;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.receipt-title,
+.receipt-grid,
+.receipt-lines,
+.receipt-meta,
+.receipt-footer {
+    padding: 0.85rem 1rem;
+}
+
+.receipt-title strong {
+    display: block;
+    margin-bottom: 0.18rem;
+    font-size: 1rem;
+}
+
+.receipt-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.receipt-grid strong,
+.receipt-lines strong {
+    display: block;
+    margin-top: 0.12rem;
+    font-size: 0.88rem;
+    overflow-wrap: anywhere;
+}
+
+.receipt-lines > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.35rem 0;
+}
+
+.receipt-total {
+    margin-top: 0.35rem;
+    padding-top: 0.7rem !important;
+    border-top: 1px dashed #cbd5e1;
+}
+
+.receipt-total strong {
+    color: #14532d;
+    font-size: 1.12rem;
+}
+
+.receipt-meta {
+    display: grid;
+    gap: 0.25rem;
+    background: #f8fafc;
+}
+
+.receipt-footer {
+    text-align: center;
+    background: #ecfdf5;
+    color: #166534;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+@media (max-width: 820px) {
+    #page-santri .data-table,
+    #page-pembayaran .data-table {
+        min-width: 640px;
     }
 }

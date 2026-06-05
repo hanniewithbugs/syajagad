@@ -106,12 +106,35 @@ class LocalChatbotTest extends TestCase
             ->assertSee('SPP Semester Ganjil 2025');
     }
 
-    public function test_chatbot_rejects_unknown_intent(): void
+    public function test_chatbot_guides_unknown_questions_back_to_app_context(): void
     {
         $santri = User::factory()->create(['role' => 'santri', 'nis' => '24 008 904']);
 
         $this->actingAs($santri)->postJson('/chatbot/quick', [
-            'intent' => 'lihat_tagihan_orang_lain',
-        ])->assertUnprocessable();
+            'message' => 'siapa presiden sekarang?',
+        ])->assertOk()
+            ->assertJsonFragment(['intent' => 'fallback'])
+            ->assertSee('Saya paling akurat untuk hal yang berhubungan dengan SyaJagad');
+    }
+
+    public function test_chatbot_can_infer_free_text_payment_question(): void
+    {
+        $santri = User::factory()->create(['role' => 'santri', 'nis' => '24 008 905']);
+
+        Invoice::create([
+            'user_id' => $santri->id,
+            'name' => 'SPP Semester Ganjil 2026',
+            'due_date' => '2026-07-20',
+            'amount' => 2200000,
+            'penalty' => 0,
+            'total' => 2200000,
+            'status' => 'belum',
+        ]);
+
+        $this->actingAs($santri)->postJson('/chatbot/quick', [
+            'message' => 'tagihan saya berapa?',
+        ])->assertOk()
+            ->assertJsonFragment(['intent' => 'total_tagihan'])
+            ->assertJsonPath('data.summary.active_total', 2200000);
     }
 }

@@ -477,7 +477,7 @@
                 <div class="report-grid">
                     <div class="content-card full-width">
                         <div class="card-header">
-                            <h3><i class="fas fa-chart-line"></i> Pertumbuhan Pendapatan</h3>
+                            <h3><i class="fas fa-chart-pie"></i> Distribusi Status Pembayaran</h3>
                         </div>
                         <div class="card-body">
                             <canvas id="revenueChart" width="800" height="300"></canvas>
@@ -485,7 +485,7 @@
                     </div>
                     <div class="content-card">
                         <div class="card-header">
-                            <h3><i class="fas fa-chart-pie"></i> Demografi Pembayaran</h3>
+                            <h3><i class="fas fa-users"></i> Demografi Santri per Angkatan</h3>
                         </div>
                         <div class="card-body">
                             <canvas id="demographyChart" width="300" height="300"></canvas>
